@@ -2,12 +2,24 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + React + TS</title>
+    <link rel="icon" type="image/svg+xml" href="/event-favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="description" content="Streamline event management with our comprehensive event organization platform" />
+    <meta name="keywords" content="event management, event planning, organization, scheduling" />
+    <title>Event Flow - Organize, Manage, Succeed</title>
+    
+    <!-- Performance Optimization -->
+    <link rel="preload" href="/src/main.tsx" as="script" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    
+    <!-- PWA and Mobile Optimization -->
+    <meta name="application-name" content="Event Hub" />
+    <meta name="theme-color" content="#007bff" />
   </head>
   <body>
+    <noscript>You need to enable JavaScript to run this Event Management Application.</noscript>
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <script type="module" src="/src/main.tsx" defer></script>
   </body>
 </html>
