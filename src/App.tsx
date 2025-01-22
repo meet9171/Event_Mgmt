@@ -13,6 +13,9 @@ import PublicEvent from './pages/PublicEvent';
 import ProtectedRoute from './components/ProtectedRoute';
 import Home from './pages/Home';
 import EventUpdate from './pages/EventUpdate';
+import { About } from './pages/About';
+import { Privacy } from './pages/Privacy';
+import { ContactPage } from './pages/Contact';
 
 function App() {
   return (
@@ -24,6 +27,9 @@ function App() {
           {/* <Route path="/dashboard" element={<Dashboard />} /> */}
           <Route path="/register123" element={<Register />} />
           <Route path="/e/:eventId" element={<PublicEvent />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/contact" element={<ContactPage />} />
 
           <Route element={<ProtectedRoute />}>
             <Route element={<Layout />}>

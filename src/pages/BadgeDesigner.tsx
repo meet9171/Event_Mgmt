@@ -58,10 +58,11 @@ function BadgeDesigner() {
   }, [eventId]);
 
   const addElement = (type: BadgeElement['type']) => {
+    console.log("type",type);
     const newElement: BadgeElement = {
       id: Math.random().toString(36).substr(2, 9),
       type,
-      content: type === 'text' ? 'New Text' : '',
+      content: type === 'text' ? 'New Text' : `type = ${type}`,
       x: 50,
       y: 50,
       width: type === 'qr' ? 100 : 200,
@@ -190,7 +191,7 @@ function BadgeDesigner() {
                   <div
                     key={field.id}
                     className="text-sm text-gray-600 p-2 bg-gray-50 rounded cursor-pointer hover:bg-gray-100"
-                    onClick={() => addElement('text')}
+                    onClick={() => addElement(field.label)}
                   >
                     {field.label}
                   </div>

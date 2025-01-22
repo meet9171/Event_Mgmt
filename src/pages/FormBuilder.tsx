@@ -21,7 +21,24 @@ type FormField = z.infer<typeof fieldSchema>;
 function FormBuilder() {
   const { eventId } = useParams<{ eventId: string }>();
   const navigate = useNavigate();
-  const [fields, setFields] = useState<FormField[]>([]);
+  const [fields, setFields] = useState<FormField[]>([
+    {
+      label: 'Name',
+      field_type: 'text',
+      placeholder: 'Your Name',
+      is_required: true,
+      validation_rules: {},
+      order_index: 0,
+    },
+    {
+      label: 'Email',
+      field_type: 'email',
+      placeholder: 'Your Email',
+      is_required: true,
+      validation_rules: {},
+      order_index: 1,
+    }
+  ]);
   const [draggedField, setDraggedField] = useState<number | null>(null);
 
   useEffect(() => {
@@ -39,7 +56,32 @@ function FormBuilder() {
         return;
       }
 
-      setFields(data || []);
+      // Prepend Name and Email fields if not already present
+      const fetchedFields = data || [];
+      const nameField = fetchedFields.find(f => f.label === 'Name');
+      const emailField = fetchedFields.find(f => f.label === 'Email');
+
+      const updatedFields = [
+        {
+          label: 'Name',
+          field_type: 'text',
+          placeholder: 'Your Name',
+          is_required: true,
+          validation_rules: {},
+          order_index: 0,
+        },
+        {
+          label: 'Email',
+          field_type: 'email',
+          placeholder: 'Your Email',
+          is_required: true,
+          validation_rules: {},
+          order_index: 1,
+        },
+        ...fetchedFields.filter(f => f.label !== 'Name' && f.label !== 'Email')
+      ];
+
+      setFields(updatedFields);
     };
 
     fetchFormFields();
@@ -56,39 +98,54 @@ function FormBuilder() {
       order_index: fields.length,
     };
 
-    setFields([...fields, newField]);
+    setFields([...fields.slice(0, 2), ...fields.slice(2), newField]);
   };
 
   const removeField = (index: number) => {
+    // Prevent removing Name and Email fields
+    if (index < 2) return;
     setFields(fields.filter((_, i) => i !== index));
   };
 
   const updateField = (index: number, updates: Partial<FormField>) => {
+    // Remove restriction on modifying Name and Email fields
     const updatedFields = [...fields];
-    updatedFields[index] = { ...updatedFields[index], ...updates };
+    updatedFields[index] = { 
+      ...updatedFields[index], 
+      ...updates,
+      // Ensure these fields remain required
+      is_required: true 
+    };
     setFields(updatedFields);
   };
 
   const handleDragStart = (index: number) => {
+    // Prevent dragging Name and Email fields
+    if (index < 2) return;
     setDraggedField(index);
   };
 
   const handleDragOver = (e: React.DragEvent, index: number) => {
-    e.preventDefault();
-    if (draggedField === null || draggedField === index) return;
+    // Prevent dragging Name and Email fields
+    if (index < 2 || draggedField === null || draggedField === index || draggedField < 2) return;
 
+    e.preventDefault();
     const updatedFields = [...fields];
     const [draggedItem] = updatedFields.splice(draggedField, 1);
     updatedFields.splice(index, 0, draggedItem);
 
+    // Recalculate order_index for draggable fields
     updatedFields.forEach((field, i) => {
-      field.order_index = i;
+      field.order_index = i >= 2 ? i : field.order_index;
     });
 
     setFields(updatedFields);
     setDraggedField(index);
   };
 
+
+  console.log("fields",fields); 
+  
   const saveForm = async () => {
     if (!eventId) return;
 
@@ -99,7 +156,7 @@ function FormBuilder() {
         .delete()
         .eq('event_id', eventId);
 
-      // Insert new fields
+      // Insert new fields, starting from index 2 (after Name and Email)
       const { error } = await supabase
         .from('form_fields')
         .insert(
@@ -189,51 +246,47 @@ function FormBuilder() {
             {fields.map((field, index) => (
               <div
                 key={index}
-                draggable
+                draggable={index >= 2}
                 onDragStart={() => handleDragStart(index)}
                 onDragOver={(e) => handleDragOver(e, index)}
-                className="bg-gray-50 p-4 rounded-lg border border-gray-200 cursor-move"
+                className={`bg-gray-50 p-4 rounded-lg border border-gray-200 ${index < 2 ? 'cursor-default' : 'cursor-move'}`}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex items-center">
-                    <Grip className="h-5 w-5 text-gray-400 mr-3" />
+                    {index >= 2 && <Grip className="h-5 w-5 text-gray-400 mr-3" />}
                     <div>
                       <input
                         type="text"
                         value={field.label}
                         onChange={(e) => updateField(index, { label: e.target.value })}
-                        className="block w-full text-sm font-medium text-gray-900 border-0 border-b border-transparent bg-transparent focus:border-indigo-600 focus:ring-0"
+                        className={`block w-full text-sm font-medium text-gray-900 border-0 border-b border-transparent bg-transparent focus:border-indigo-600 focus:ring-0 ${index < 2 ? 'cursor-default' : ''}`}
                         placeholder="Field Label"
+                        // readOnly={index < 2}
                       />
-                      <span className="text-xs text-gray-500">{field.field_type}</span>
+                      <span className="text-xs text-gray-500">
+                        {
+                         `${field.field_type.charAt(0).toUpperCase() + field.field_type.slice(1)} Field`}
+                        {index < 2 && ' (Required)'}
+                      </span>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <label className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={field.is_required}
-                        onChange={(e) => updateField(index, { is_required: e.target.checked })}
-                        className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                      />
-                      <span className="ml-2 text-sm text-gray-600">Required</span>
-                    </label>
+                  {index >= 2 && (
                     <button
                       onClick={() => removeField(index)}
-                      className="text-gray-400 hover:text-red-500"
+                      className="text-red-500 hover:text-red-700"
                     >
                       <X className="h-5 w-5" />
                     </button>
-                  </div>
+                  )}
                 </div>
-
                 <div className="mt-3">
                   <input
-                    type="text"
-                    value={field.placeholder || ''}
+                    type={field.field_type}
+                    value={field.placeholder}
                     onChange={(e) => updateField(index, { placeholder: e.target.value })}
-                    className="block w-full text-sm text-gray-700 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                    className={`block w-full text-sm text-gray-700 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 ${index < 2 ? 'cursor-default' : ''}`}
                     placeholder="Placeholder text"
+                    // readOnly={index < 2}
                   />
                 </div>
 
