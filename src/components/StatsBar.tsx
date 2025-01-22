@@ -2,10 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { Users, Calendar, Star, Award } from 'lucide-react';
 
 const stats = [
-  { icon: Users, label: 'Active Users', value: 50000 },
-  { icon: Calendar, label: 'Events Managed', value: 125000 },
+  { icon: Users, label: 'Active Users', value: 150 },
+  { icon: Calendar, label: 'Events Managed', value: 1250 },
   { icon: Star, label: 'Client Satisfaction', value: 98 },
-  { icon: Award, label: 'Industry Awards', value: 50 }
+  { icon: Award, label: 'Industry Awards', value: 10 }
 ];
 
 export const StatsBar = () => {

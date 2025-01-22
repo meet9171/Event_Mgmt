@@ -29,7 +29,7 @@ export const ProcessTimeline = () => {
     <section className="py-24 bg-white">
       <div className="container mx-auto px-4">
         <h2 className="text-4xl font-bold text-center text-gray-900 mb-16">
-          How It Works
+          How It all works together ?
         </h2>
 
         <div className="hidden md:grid grid-cols-4 gap-8 relative">

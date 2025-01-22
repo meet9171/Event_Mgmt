@@ -1,7 +1,6 @@
-import React from 'react';
-import { Calendar, ArrowRight, Play } from 'lucide-react';
-import { motion } from 'framer-motion';
-
+import React from "react";
+import { Calendar, ArrowRight, Play } from "lucide-react";
+import { motion } from "framer-motion";
 
 export const HeroSection = () => {
   return (
@@ -18,9 +17,9 @@ export const HeroSection = () => {
           <source src="https://player.vimeo.com/external/434045526.sd.mp4?s=c27eecc69a27dbc4ff2b87d38afc35f1a9e7c02d" type="video/mp4" />
         </video>
       </div> */}
- 
+
       {/* Floating background elements */}
-      <motion.div 
+      <motion.div
         className="absolute inset-0 overflow-hidden -z-10"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -35,7 +34,7 @@ export const HeroSection = () => {
           transition={{
             duration: 5,
             repeat: Infinity,
-            repeatType: "reverse"
+            repeatType: "reverse",
           }}
         />
         <motion.div
@@ -47,7 +46,7 @@ export const HeroSection = () => {
           transition={{
             duration: 6,
             repeat: Infinity,
-            repeatType: "reverse"
+            repeatType: "reverse",
           }}
         />
       </motion.div>
@@ -55,24 +54,26 @@ export const HeroSection = () => {
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <div className="space-y-8">
             <h1 className="text-5xl md:text-6xl font-bold leading-tight">
-              Revolutionize Your Event Management
+              Your Event, Our Flow.
             </h1>
-            <h2 className="text-xl md:text-2xl text-gray-500 leading-relaxed">
-              From planning to execution, we streamline every step
+            <h2 className="text-xl md:text-2xl text-gray-600 leading-relaxed">
+            EventFlow is an all-in-one event management solution with one primary goal-making the planning process easy and quick. Be it these firm conferences or weddings or corporate events, EventFlow comes with features built right into the tool, enabling scheduling, collaborating, and tracking attendees from start to finish. An enhanced experience awaits you with advanced options like customized badge designing, with EventFlow creating a seamless event and with most efficiency.
             </h2>
             <div className="flex flex-wrap gap-4">
               <button className="bg-[#FF6B6B] hover:bg-[#FF5151] px-8 py-4 rounded-lg font-semibold flex items-center gap-2 transform transition hover:scale-105">
                 Get Started <ArrowRight className="w-5 h-5" />
               </button>
-              <a href='#features' className="border-2 border-grey  px-8 py-4 rounded-lg font-semibold flex items-center gap-2 hover:bg-white/10 transform transition">
+              <a
+                href="#features"
+                className="border-2 border-grey  px-8 py-4 rounded-lg font-semibold flex items-center gap-2 hover:bg-white/10 transform transition"
+              >
                 Explore Features <Play className="w-5 h-5" />
               </a>
             </div>
           </div>
 
           <div className="hidden lg:block">
-<img src="/hero.svg" alt="Event Management" />
-
+            <img src="/hero.svg" alt="Event Management" />
 
             {/* <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 transform hover:scale-[1.02] transition-transform duration-300">
               <div className="bg-white rounded-xl shadow-xl p-6">

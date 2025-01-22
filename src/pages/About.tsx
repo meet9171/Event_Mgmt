@@ -5,19 +5,19 @@ import { Footer } from '../components/Footer';
 
 const teamMembers = [
   {
-    name: 'Sarah Johnson',
-    role: 'CEO & Founder',
-    image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80'
-  },
-  {
-    name: 'Michael Chen',
-    role: 'CTO',
+    name: 'Yash Tiwari',
+    role: 'Developer',
     image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80'
   },
   {
-    name: 'Emma Davis',
-    role: 'Head of Operations',
-    image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80'
+    name: 'Ashraf Chauhan',
+    role: 'Founder, CEO',
+    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80'
+  },
+  {
+    name: 'Meet Kathiriya',
+    role: 'Developer',
+    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80'
   }
 ];
 
@@ -49,7 +49,7 @@ export const About = () => {
           <div className="container mx-auto px-4 text-center">
             <h1 className="text-5xl font-bold mb-6">Our Story</h1>
             <p className="text-xl max-w-3xl mx-auto">
-              Founded in 2020, EventFlow Pro has been transforming the event management industry with innovative solutions and cutting-edge technology.
+            Founded in 2025, EventFlow is revolutionizing the event management industry with its innovative solutions and advanced technology.
             </p>
           </div>
         </section>
@@ -60,8 +60,7 @@ export const About = () => {
               <Calendar className="w-16 h-16 text-[#6B46C1] mx-auto mb-6" />
               <h2 className="text-4xl font-bold mb-6">Our Mission</h2>
               <p className="text-xl text-gray-600">
-                To revolutionize event management by providing smart, intuitive solutions that empower organizers to create extraordinary experiences.
-              </p>
+              To transform event management by offering smart, intuitive solutions that enable organizers to craft exceptional experiences.              </p>
             </div>
           </div>
         </section>

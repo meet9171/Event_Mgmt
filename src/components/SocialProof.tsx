@@ -3,34 +3,36 @@ import { Star, Play } from 'lucide-react';
 
 const testimonials = [
   {
-    name: 'Sarah Johnson',
-    role: 'Event Director',
-    company: 'Global Events Co.',
+    name: 'Dhwani Mistry',
+    role: 'Event Manager',
+    company: 'Coderkube Events Co.',
     image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=128&q=80',
-    quote: 'This platform has transformed how we manage our events. The AI features are game-changing.'
+    quote: "EventFlow has revolutionized the way we manage our events. The AI-powered features are truly game-changing, making planning and execution smoother than ever. It’s hard to imagine event management without EventFlow."
   },
   {
-    name: 'Michael Chen',
+    name: 'Ashraf Chauhan',
     role: 'CEO',
-    company: 'Tech Conferences Inc.',
+    company: 'Nvidia Corporation',
     image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-1.2.1&auto=format&fit=crop&w=128&q=80',
-    quote: "We've seen a 40% increase in efficiency since implementing this system."
+    quote: "Since implementing EventFlow, we've experienced a 40% boost in efficiency. The platform has streamlined our event management, reducing manual tasks and errors. With enhanced collaboration and automation, we’re able to focus more on delivering exceptional events."
   },
   {
-    name: 'Emma Davis',
-    role: 'Operations Manager',
-    company: 'Summit Events',
-    image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-1.2.1&auto=format&fit=crop&w=128&q=80',
-    quote: 'The automation features have saved us countless hours of manual work.'
+    name: 'Femil Sabhaya',
+    role: 'Event Manager',
+    company: 'Safaya Events',
+    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-1.2.1&auto=format&fit=crop&w=128&q=80',
+    quote: "EventFlow's automation features have saved us countless hours of manual work. By streamlining repetitive tasks, we’ve been able to focus on more strategic aspects of event management. It’s a game-changer for efficiency.."
   }
 ];
 
 const clientLogos = [
   'https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/apple.svg',
   'https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/google.svg',
-  'https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/microsoft.svg',
+  'https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/nike.svg',
+  'https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/puma.svg',
+  'https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/samsung.svg',
   'https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/amazon.svg',
-  'https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/meta.svg'
+  'https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/nvidia.svg'
 ];
 
 export const SocialProof = () => {
@@ -42,7 +44,7 @@ export const SocialProof = () => {
             Trusted by Industry Leaders
           </h2>
           <p className="text-xl text-gray-600">
-            Join thousands of satisfied customers worldwide
+            Join hundreds of satisfied customers across the globe
           </p>
         </div>
 

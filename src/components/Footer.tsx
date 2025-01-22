@@ -85,11 +85,11 @@ export const Footer = () => {
             <div className="flex items-center gap-2 mb-4">
               <Calendar className="w-6 h-6 text-[#6B46C1]" />
               <span className="font-bold text-xl bg-gradient-to-r from-[#6B46C1] to-[#319795] bg-clip-text text-transparent">
-                EventFlow Pro
+                EventFlow
               </span>
             </div>
             <p className="text-gray-600 mb-4">
-              Revolutionizing event management with smart solutions.
+              Your Event. Our Flow
             </p>
             <div className="flex items-center gap-2">
               <Mail className="w-5 h-5 text-gray-400" />

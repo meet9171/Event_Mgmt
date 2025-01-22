@@ -5,55 +5,55 @@ const features = [
   {
     icon: Calendar,
     title: 'Smart Scheduling',
-    description: 'AI-powered scheduling that adapts to your needs',
+    description: 'AI-powered scheduling that adapts to your needs,ensuring seamless planning.',
     gradient: 'from-[#6B46C1] via-[#8B5CF6] to-[#7C3AED]'
   },
   {
     icon: Users,
     title: 'Team Collaboration',
-    description: 'Real-time collaboration tools for your entire team',
+    description: 'Real-time collaboration tools to empower your team and enhance productivity.',
     gradient: 'from-[#319795] via-[#3AB7BF] to-[#2DD4BF]'
   },
   {
     icon: Clock,
     title: 'Time Management',
-    description: 'Efficient timeline planning and execution',
+    description: 'Streamlined timeline planning and execution for optimal event coordination.',
     gradient: 'from-[#FF6B6B] via-[#FF8787] to-[#FF5151]'
   },
   {
     icon: Bell,
     title: 'Smart Notifications',
-    description: 'Stay updated with intelligent alerts',
+    description: 'Stay informed with intelligent, timely alerts to keep you on track.',
     gradient: 'from-[#6B46C1] via-[#319795] to-[#2DD4BF]'
   },
   {
     icon: Settings,
     title: 'Custom Workflows',
-    description: 'Create and automate your perfect workflow',
+    description: 'Design and automate custom workflows tailored to your event needs.',
     gradient: 'from-[#FF6B6B] via-[#FF8787] to-[#FF5151]'
   },
   {
     icon: Zap,
     title: 'Instant Analytics',
-    description: 'Real-time insights and reporting',
+    description: 'Access real-time insights and detailed reporting to inform decision-making.',
     gradient: 'from-[#319795] via-[#3AB7BF] to-[#2DD4BF]'
   },
   {
     icon: PieChart,
     title: 'Budget Tracking',
-    description: 'Keep your finances in check effortlessly',
+    description: 'Effortlessly manage and monitor your event finances with precision.',
     gradient: 'from-[#6B46C1] via-[#8B5CF6] to-[#7C3AED]'
   },
   {
     icon: Shield,
     title: 'Security First',
-    description: 'Enterprise-grade security for your events',
+    description: 'Ensure enterprise-grade security to safeguard your event data.',
     gradient: 'from-[#FF6B6B] via-[#FF8787] to-[#FF5151]'
   },
   {
     icon: Globe,
     title: 'Global Reach',
-    description: 'Manage events across multiple locations',
+    description: 'Seamlessly manage events across multiple locations with global scalability.',
     gradient: 'from-[#319795] via-[#3AB7BF] to-[#2DD4BF]'
   }
 ];
@@ -64,10 +64,10 @@ export const FeaturesGrid = () => {
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-4xl font-bold text-gray-900 mb-4">
-            Powerful Features for Modern Events
+            Powerful Features for Managing Modern Events.
           </h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Discover our comprehensive suite of tools designed to make your event management experience seamless and efficient
+            Explore our comprehensive suite of tools, precisely crafted to streamline your event management experience.
           </p>
         </div>
 
@@ -97,9 +97,9 @@ export const FeaturesGrid = () => {
                   </p>
                   
                   <div className="mt-auto flex items-center gap-2 text-[#6B46C1] opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <span className="font-medium">Learn more</span>
+                    {/* <span className="font-medium">Learn more</span> */}
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      {/* <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /> */}
                     </svg>
                   </div>
                 </div>
