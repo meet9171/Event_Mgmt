@@ -12,6 +12,7 @@ import Register from './pages/Register';
 import PublicEvent from './pages/PublicEvent';
 import ProtectedRoute from './components/ProtectedRoute';
 import Home from './pages/Home';
+import EventUpdate from './pages/EventUpdate';
 
 function App() {
   return (
@@ -29,6 +30,7 @@ function App() {
               <Route path="/dashboard" element={<Dashboard />} />
               {/* <Route path="/" element={<Dashboard />} /> */}
               <Route path="/events/create" element={<EventCreate />} />
+              <Route path="/events/update/:eventId" element={<EventUpdate />} />
               <Route path="/events/:eventId" element={<EventDetail />} />
               <Route path="/events/:eventId/form" element={<FormBuilder />} />
               <Route path="/events/:eventId/badges" element={<BadgeDesigner />} />
