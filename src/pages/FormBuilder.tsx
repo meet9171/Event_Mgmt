@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Grip, Plus, X, Save, ArrowLeft } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-
+import { v4 as uuidv4 } from 'uuid';
 const fieldSchema = z.object({
   label: z.string().min(1, 'Label is required'),
   field_type: z.enum(['text', 'select', 'number', 'date', 'email']),
@@ -20,7 +20,10 @@ type FormField = z.infer<typeof fieldSchema>;
 
 function FormBuilder() {
   const { eventId } = useParams<{ eventId: string }>();
+  console.log("eventId============",eventId);
+  
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
   const [fields, setFields] = useState<FormField[]>([
     {
       label: 'Name',
@@ -42,50 +45,60 @@ function FormBuilder() {
   const [draggedField, setDraggedField] = useState<number | null>(null);
 
   useEffect(() => {
-    if (!eventId) return;
-
     const fetchFormFields = async () => {
+      setIsLoading(true);
+
       const { data, error } = await supabase
         .from('form_fields')
-        .select('*')
+        .select('label,field_type,options,placeholder,is_required,validation_rules,order_index')
         .eq('event_id', eventId)
         .order('order_index');
 
       if (error) {
         console.error('Error fetching form fields:', error);
+        setIsLoading(false);
         return;
       }
 
       // Prepend Name and Email fields if not already present
       const fetchedFields = data || [];
-      const nameField = fetchedFields.find(f => f.label === 'Name');
-      const emailField = fetchedFields.find(f => f.label === 'Email');
 
-      const updatedFields = [
-        {
-          label: 'Name',
-          field_type: 'text',
-          placeholder: 'Your Name',
-          is_required: true,
-          validation_rules: {},
-          order_index: 0,
-        },
-        {
-          label: 'Email',
-          field_type: 'email',
-          placeholder: 'Your Email',
-          is_required: true,
-          validation_rules: {},
-          order_index: 1,
-        },
-        ...fetchedFields.filter(f => f.label !== 'Name' && f.label !== 'Email')
+           // Check if Name and Email fields are already customized
+           const nameField = fetchedFields.find(f => f.order_index === 0);
+           const emailField = fetchedFields.find(f => f.order_index === 1);
+
+           const updatedFields = nameField && emailField 
+           ? [
+               nameField,
+               emailField,
+               ...fetchedFields.filter(f => f.order_index >= 2)
+             ]
+           : [
+               {
+                 label: 'Name',
+                 field_type: 'text',
+                 placeholder: 'Your Name',
+                 is_required: true,
+                 validation_rules: {},
+                 order_index: 0,
+               },
+               {
+                 label: 'Email',
+                 field_type: 'email',
+                 placeholder: 'Your Email',
+                 is_required: true,
+                 validation_rules: {},
+                 order_index: 1,
+               },
+        ...fetchedFields.filter(f => f.order_index >= 2)
       ];
-
+      
+      setIsLoading(false);
       setFields(updatedFields);
     };
 
     fetchFormFields();
-  }, [eventId]);
+  }, []);
 
   const addField = (type: FormField['field_type']) => {
     const newField: FormField = {
@@ -98,6 +111,8 @@ function FormBuilder() {
       order_index: fields.length,
     };
 
+    console.log("new field",newField);
+    
     setFields([...fields.slice(0, 2), ...fields.slice(2), newField]);
   };
 
@@ -142,13 +157,11 @@ function FormBuilder() {
     setFields(updatedFields);
     setDraggedField(index);
   };
-
-
-  console.log("fields",fields); 
   
   const saveForm = async () => {
     if (!eventId) return;
 
+    setIsLoading(true);
     try {
       // Delete existing fields
       await supabase
@@ -165,14 +178,29 @@ function FormBuilder() {
             event_id: eventId,
           }))
         );
+      // const fieldsToSave = fields.map((field) => ({
+      //   ...field,
+      //   event_id: eventId,
+      // }));
+
+      // Insert new fields
+      // const { error } = await supabase
+      //   .from('form_fields')
+      //   .insert(fieldsToSave);
+
 
       if (error) throw error;
-
+      setIsLoading(false);
       navigate(`/events/${eventId}`);
     } catch (error) {
       console.error('Error saving form:', error);
+      setIsLoading(false);
     }
   };
+
+  if(isLoading){
+    return <div id="loading">Loading&#8230;</div>;
+  }
 
   return (
     <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">

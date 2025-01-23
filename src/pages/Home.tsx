@@ -31,7 +31,7 @@ export default function Home() {
         return () => observer.disconnect();
       }, []);
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-white px-10">
       <Navbar />
       <HeroSection />
       <FeaturesGrid />

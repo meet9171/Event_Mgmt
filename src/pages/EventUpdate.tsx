@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -28,6 +28,8 @@ function EventUpdate() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { eventId } = useParams<{ eventId: string }>();
+  const [isLoading, setIsLoading] = useState(false);
+
 
   console.log("eventId",eventId);
   console.log("user",user);  
@@ -45,6 +47,7 @@ function EventUpdate() {
     const fetchEventDetails = async () => {
       if (!eventId || !user) return;
 
+      setIsLoading(true);
       try {
         const { data: event, error } = await supabase
           .from('events')
@@ -62,11 +65,10 @@ function EventUpdate() {
             end_date: event.end_date ? new Date(event.end_date).toISOString().slice(0, 16) : '',
           });
         }
-
-        console.log("data",event);
-        
+        setIsLoading(false);
       } catch (error) {
         console.error('Error fetching event details:', error);
+        setIsLoading(false);
         navigate('/events');
       }
     };
@@ -96,6 +98,10 @@ function EventUpdate() {
       console.error('Error updating event:', error);
     }
   };
+
+  if(isLoading){
+    return <div id="loading">Loading&#8230;</div>;
+  }
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -274,7 +280,7 @@ function EventUpdate() {
               <div className="px-4 py-3 bg-gray-50 text-right sm:px-6">
                 <button
                   type="submit"
-                  className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-[#6B46C1] hover:bg-[#613eb3] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#6B46C1]"
                 >
                   Update Event
                 </button>

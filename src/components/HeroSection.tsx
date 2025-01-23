@@ -56,7 +56,7 @@ export const HeroSection = () => {
             <h1 className="text-5xl md:text-6xl font-bold leading-tight">
               Your Event, Our Flow.
             </h1>
-            <h2 className="text-xl md:text-2xl text-gray-600 leading-relaxed">
+            <h2 className="text-xl md:text-lg text-gray-600 leading-relaxed">
             EventFlow is an all-in-one event management solution with one primary goal-making the planning process easy and quick. Be it these firm conferences or weddings or corporate events, EventFlow comes with features built right into the tool, enabling scheduling, collaborating, and tracking attendees from start to finish. An enhanced experience awaits you with advanced options like customized badge designing, with EventFlow creating a seamless event and with most efficiency.
             </h2>
             <div className="flex flex-wrap gap-4">

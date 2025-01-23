@@ -4,6 +4,7 @@ import { format } from 'date-fns';
 import { Calendar, MapPin, Users, Clock, QrCode, Edit } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import QRCode from 'qrcode.react';
+import { formatInTimeZone } from 'date-fns-tz';
 
 interface Event {
   id: string;
@@ -73,11 +74,11 @@ function EventDetail() {
     fetchEventDetails();
   }, [eventId]);
 
-  if (!event) {
-    return <div>Loading...</div>;
-  }
+  const publicUrl = `${window.location.origin}/e/${event?.id}`;
 
-  const publicUrl = `${window.location.origin}/e/${event.id}`;
+  if(!event){
+    return <div id="loading">Loading&#8230;</div>;
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -86,35 +87,44 @@ function EventDetail() {
         <div className="bg-white shadow overflow-hidden sm:rounded-lg">
           <div className="px-4 py-5 sm:px-6">
             <div className="flex justify-between items-start">
-              <div>
-                <h3 className="text-lg leading-6 font-medium text-gray-900">{event.name}</h3>
-                <p className="mt-1 max-w-2xl text-sm text-gray-500">{event.event_type}</p>
+              <div className='flex space-x-4 items-center'>
+                <div>
+                  <img
+                    src={event?.logo_url}
+                    alt={event?.name}
+                    className="w-20 h-20 object-cover rounded-lg" />
+                </div>
+                <div>
+                  <h3 className="text-lg leading-6 font-medium text-gray-900">{event?.name}</h3>
+                  <p className="mt-1 max-w-2xl text-sm text-gray-500">{event?.event_type}</p>
+                </div>
+
               </div>
               <div className="flex space-x-4">
-              <Link
+                <Link
                   to={`/events/update/${eventId}`}
-                  className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  className="inline-flex items-center px-3 py-2 border border-[#6B46C1] shadow-sm text-sm leading-4 font-medium rounded-md text-[#6B46C1] bg-white hover:bg-purple-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                 >
                   <Edit className="h-4 w-4 mr-2" />
                   Edit Event
                 </Link>
                 <Link
                   to={`/events/${eventId}/form`}
-                  className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  className="inline-flex items-center px-3 py-2 border border-[#6B46C1] shadow-sm text-sm leading-4 font-medium rounded-md text-[#6B46C1] bg-white hover:bg-purple-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                 >
                   <Edit className="h-4 w-4 mr-2" />
                   Edit Form
                 </Link>
                 <Link
                   to={`/events/${eventId}/badges`}
-                  className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  className="inline-flex items-center px-3 py-2 border border-[#6B46C1] shadow-sm text-sm leading-4 font-medium rounded-md text-[#6B46C1] bg-white hover:bg-purple-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                 >
                   <QrCode className="h-4 w-4 mr-2" />
                   Design Badges
                 </Link>
                 <button
                   onClick={() => setShowQR(!showQR)}
-                  className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  className="inline-flex items-center px-3 py-2 border border-[#6B46C1] shadow-sm text-sm leading-4 font-medium rounded-md text-[#6B46C1] bg-white hover:bg-purple-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                 >
                   <QrCode className="h-4 w-4 mr-2" />
                   {showQR ? 'Hide QR' : 'Show QR'}
@@ -122,6 +132,14 @@ function EventDetail() {
               </div>
             </div>
           </div>
+
+          <div className="border-t border-gray-200">
+            <dl className="">
+              <img src={event?.banner_url} alt="Event Banner" className='w-full h-96' />
+            </dl>
+          </div>
+
+
           <div className="border-t border-gray-200 px-4 py-5 sm:px-6">
             {showQR && (
               <div className="mb-6 flex justify-center">
@@ -131,44 +149,50 @@ function EventDetail() {
                 </div>
               </div>
             )}
+
             <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2">
               <div className="sm:col-span-1">
                 <dt className="text-sm font-medium text-gray-500 flex items-center">
-                  <Calendar className="h-5 w-5 mr-2" />
+                  <Calendar className="h-5 w-5 mr-2  text-[#6B46C1] text-bold" />
                   Date & Time
                 </dt>
                 <dd className="mt-1 text-sm text-gray-900">
-                  {format(new Date(event.start_date), 'PPP')} - {format(new Date(event.end_date), 'PPP')}
+                  
+                    
+                      {formatInTimeZone(new Date(event.start_date), 'Asia/Kolkata', 'yyyy-MM-dd HH:mm:ssXXX')} -{' '}
+                      {formatInTimeZone(new Date(event.end_date), 'Asia/Kolkata', 'yyyy-MM-dd HH:mm:ssXXX')}
+                    
+                  
                 </dd>
               </div>
               <div className="sm:col-span-1">
                 <dt className="text-sm font-medium text-gray-500 flex items-center">
-                  <MapPin className="h-5 w-5 mr-2" />
+                  <MapPin className="h-5 w-5 mr-2  text-[#6B46C1] text-bold" />
                   Venue
                 </dt>
-                <dd className="mt-1 text-sm text-gray-900">{event.venue}</dd>
+                <dd className="mt-1 text-sm text-gray-900">{event?.venue}</dd>
               </div>
               <div className="sm:col-span-1">
                 <dt className="text-sm font-medium text-gray-500 flex items-center">
-                  <Users className="h-5 w-5 mr-2" />
+                  <Users className="h-5 w-5 mr-2  text-[#6B46C1] text-bold" />
                   Capacity
                 </dt>
                 <dd className="mt-1 text-sm text-gray-900">
-                  {event.registration_count} / {event.capacity} registered
+                  {event?.registration_count} / {event?.capacity} registered
                 </dd>
               </div>
               <div className="sm:col-span-1">
                 <dt className="text-sm font-medium text-gray-500 flex items-center">
-                  <Clock className="h-5 w-5 mr-2" />
+                  <Clock className="h-5 w-5 mr-2  text-[#6B46C1] text-bold" />
                   Price
                 </dt>
                 <dd className="mt-1 text-sm text-gray-900">
-                  {event.price === 0 ? 'Free' : `${event.price} ${event.currency}`}
+                  {event?.price === 0 ? 'Free' : `${event?.price} ${event?.currency}`}
                 </dd>
               </div>
               <div className="sm:col-span-2">
                 <dt className="text-sm font-medium text-gray-500">Description</dt>
-                <dd className="mt-1 text-sm text-gray-900">{event.description}</dd>
+                <dd className="mt-1 text-sm text-gray-900">{event?.description}</dd>
               </div>
             </dl>
           </div>
@@ -223,11 +247,10 @@ function EventDetail() {
                                 </div>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
-                                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                  registration.payment_status === 'paid'
-                                    ? 'bg-green-100 text-green-800'
-                                    : 'bg-yellow-100 text-yellow-800'
-                                }`}>
+                                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${registration.payment_status === 'paid'
+                                  ? 'bg-green-100 text-green-800'
+                                  : 'bg-yellow-100 text-yellow-800'
+                                  }`}>
                                   {registration.payment_status}
                                 </span>
                               </td>

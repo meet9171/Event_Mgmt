@@ -28,11 +28,13 @@ function Dashboard() {
     upcomingEvents: 0,
     totalRegistrations: 0,
   });
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (!user) return;
 
     const fetchEvents = async () => {
+      setIsLoading(true);
       const { data: eventsData, error: eventsError } = await supabase
         .from('events')
         .select('*, registrations(count)')
@@ -41,6 +43,7 @@ function Dashboard() {
 
       if (eventsError) {
         console.error('Error fetching events:', eventsError);
+        setIsLoading(false);
         return;
       }
 
@@ -58,10 +61,16 @@ function Dashboard() {
         upcomingEvents: formattedEvents.filter(e => new Date(e.start_date) > now).length,
         totalRegistrations: formattedEvents.reduce((acc, curr) => acc + (curr.registration_count || 0), 0),
       });
+      setIsLoading(false);
     };
 
     fetchEvents();
   }, [user]);
+
+  if(isLoading){
+    return <div id="loading">Loading&#8230;</div>;
+  }
+
 
   return (
     <div className="space-y-6 px-10">
@@ -69,8 +78,8 @@ function Dashboard() {
         <div className="bg-white overflow-hidden shadow rounded-lg">
           <div className="p-5">
             <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Calendar className="h-6 w-6 text-gray-400" />
+              <div className="flex-shrink-0 bg-purple-100 rounded-lg p-2">
+                <Calendar className="h-6 w-6 text-[#6B46C1] text-bold" />
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
@@ -85,8 +94,8 @@ function Dashboard() {
         <div className="bg-white overflow-hidden shadow rounded-lg">
           <div className="p-5">
             <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Ticket className="h-6 w-6 text-gray-400" />
+              <div className="flex-shrink-0 bg-purple-100 rounded-lg p-2">
+                <Ticket className="h-6 w-6 text-[#6B46C1] text-bold" />
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
@@ -101,8 +110,8 @@ function Dashboard() {
         <div className="bg-white overflow-hidden shadow rounded-lg">
           <div className="p-5">
             <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Users className="h-6 w-6 text-gray-400" />
+              <div className="flex-shrink-0 bg-purple-100 rounded-lg p-2">
+                <Users className="h-6 w-6 text-[#6B46C1] text-bold" />
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
@@ -126,16 +135,16 @@ function Dashboard() {
                 <div className="px-4 py-4 sm:px-6">
                   <div className="flex items-center justify-between">
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-indigo-600 truncate">event name</p>
+                      <p className="text-sm font-medium text-[#6B46C1] truncate">{event.name}</p>
                       <p className="mt-1 flex items-center text-sm text-gray-500">
-                        <Calendar className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" />
-                        date 
+                        <Calendar className="flex-shrink-0 mr-1.5 h-4 w-4 " />
+                        {event.start_date} 
                       </p>
                     </div>
                     <div className="flex items-center space-x-4">
                       <div className="flex items-center text-sm text-gray-500">
-                        <Users className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" />
-                         registrations
+                        <Users className="flex-shrink-0 mr-1.5 h-4 w-4 text-[#6B46C1]" />
+                         {event.registration_count}
                       </div>
                       <ArrowRight className="h-5 w-5 text-gray-400" />
                     </div>

@@ -1,9 +1,9 @@
-import React from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, Calendar, CalendarRange, Cloud, Lock, Mail } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { motion } from 'framer-motion';
+import { useState } from 'react';
 
 interface LoginForm {
   email: string;
@@ -15,14 +15,22 @@ function Login() {
   const { signIn } = useAuth();
   const navigate = useNavigate();
 
+  const [isLoading, setIsLoading] = useState(false);
+  const [errordesc, setError] = useState(false);
+
   const onSubmit = async (data: LoginForm) => {
     try {
+      setIsLoading(true);
       await signIn(data.email, data.password);
+      setIsLoading(false);
       navigate('/dashboard');
     } catch (error) {
       console.error('Login error:', error);
+      setError(true);
+      setIsLoading(false);
     }
   };
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-teal-50 to-purple-50 flex items-center justify-center p-4">
@@ -32,7 +40,10 @@ function Login() {
         transition={{ duration: 0.5 }}
         className="w-full max-w-md"
       >
+
         <div className="bg-white rounded-2xl shadow-xl p-8">
+        {errordesc && <div className='text-red-500 text-center mb-3 font-bold'>Wrong Credentials</div>}
+
           <div className="text-center mb-8">
             <Link to="/" className="inline-flex items-center space-x-2">
               <CalendarRange className="h-8 w-8 text-teal-400" />
@@ -52,6 +63,7 @@ function Login() {
             <span role="alert">{message}</span>
           </div>
         )} */}
+          {isLoading && <div id="loading">Loading&#8230;</div>}
 
           <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
             <div className="space-y-2">
@@ -138,7 +150,7 @@ function Login() {
             </div>
           </div> */}
 
-            <button className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-xl flex items-center justify-center py-2" type='submit'>
+            <button className="w-full bg-[#6B46C1] hover:bg-[#5F3DB8] text-white rounded-xl flex items-center justify-center py-2" type='submit'>
               Sign in
             </button>
           </form>
