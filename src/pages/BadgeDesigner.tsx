@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { ArrowLeft, Save, Download, Layout } from 'lucide-react';
+import { ArrowLeft, Download, QrCodeIcon, ImageIcon } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import QRCode from 'qrcode.react';
 
 interface BadgeTemplate {
   id: string;
@@ -29,23 +29,23 @@ interface BadgeElement {
 function BadgeDesigner() {
   const { eventId } = useParams<{ eventId: string }>();
   const navigate = useNavigate();
+
   const [formFields, setFormFields] = useState<any[]>([]);
-  const [selectedTemplate, setSelectedTemplate] = useState<BadgeTemplate | null>(null);
   const [elements, setElements] = useState<BadgeElement[]>([]);
   const [selectedElement, setSelectedElement] = useState<BadgeElement | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [isLoading, setIsLoading] = useState(false);
 
-  // Add new state for orientation and paper size
+  // states for orientation and paper size
   const [orientation, setOrientation] = useState<'Landscape' | 'Portrait'>('Landscape');
   const [paperSize, setPaperSize] = useState<string>('16/9');
   const [aspectRatio, setAspectRatio] = useState('16/9');
   const [aspectWidth, setAspectWidth] = useState('100%');
   const [aspectHeight, setAspectHeight] = useState('56.25%');
 
-   // Define paper size options based on orientation
-   const paperSizeOptions = {
+  // Define paper size options based on orientation
+  const paperSizeOptions = {
     Landscape: [
       { width: '100%', height: '98.44%', label: 'Landscape Standard (16:9)', value: '16:9' },
       { width: '25%', height: '28.125%', label: 'Classic Landscape (4:3)', value: '4:3' },
@@ -69,13 +69,86 @@ function BadgeDesigner() {
 
   useEffect(() => {
     const selectedOption = findPaperSizeOption(orientation, paperSize);
-    
     if (selectedOption) {
       setAspectRatio(selectedOption.value);
       setAspectWidth(selectedOption.width);
       setAspectHeight(selectedOption.height);
     }
   }, [orientation, paperSize]);
+
+  const URLInputModal = ({
+    isOpen,
+    onClose,
+    type,
+    onSubmit
+  }: {
+    isOpen: boolean;
+    onClose: () => void;
+    type: 'image' | 'qr';
+    onSubmit: (url: string) => void;
+  }) => {
+    const [url, setUrl] = useState('');
+    const [error, setError] = useState('');
+
+    const handleSubmit = () => {
+      const urlPattern = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
+      if (!urlPattern.test(url)) {
+        setError('Please enter a valid URL');
+        return;
+      }
+      setError('');
+      onSubmit(url);
+      onClose();
+    };
+
+    if (!isOpen) return null;
+
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+        <div className="bg-white rounded-xl shadow-2xl p-6 w-96">
+          <h2 className="text-xl font-semibold mb-4">
+            {type === 'image' ? 'Add Image URL' : 'Generate QR Code'}
+          </h2>
+          <input
+            type="text"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            placeholder={type === 'image' ? 'Enter image URL' : 'Enter URL to encode'}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mb-2"
+          />
+          {error && <p className="text-red-500 text-sm mb-2">{error}</p>}
+          <div className="flex justify-end space-x-2 mt-4">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSubmit}
+              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+            >
+              Add
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const [urlModalType, setUrlModalType] = useState<'image' | 'qr' | null>(null);
+
+  const handleAddElementWithURL = (url: string) => {
+    switch (urlModalType) {
+      case 'image':
+        addElement(url, 'image');
+        break;
+      case 'qr':
+        addElement(url, 'qr');
+        break;
+    }
+    setUrlModalType(null);
+  };
 
   useEffect(() => {
     if (!eventId) return;
@@ -87,7 +160,6 @@ function BadgeDesigner() {
         .select('*')
         .eq('event_id', eventId)
         .order('order_index');
-
       if (error) {
         console.error('Error fetching form fields:', error);
         setIsLoading(false)
@@ -96,7 +168,6 @@ function BadgeDesigner() {
       setIsLoading(false)
       setFormFields(data || []);
     };
-
     fetchFormFields();
   }, [eventId]);
 
@@ -107,8 +178,8 @@ function BadgeDesigner() {
       content,
       x: 50,
       y: 50,
-      width: type === 'qr' ? 100 : 200,
-      height: type === 'qr' ? 100 : 50,
+      width: type === 'qr' ? 100 : (type === 'image' ? 200 : 200),
+      height: type === 'qr' ? 100 : (type === 'image' ? 150 : 50),
       fontSize: 16,
       fontFamily: 'Arial',
       color: '#000000',
@@ -144,7 +215,6 @@ function BadgeDesigner() {
         ? { ...el, x: Math.max(0, Math.min(x, rect.width - el.width)), y: Math.max(0, Math.min(y, rect.height - el.height)) }
         : el
     );
-
     setElements(updatedElements);
   };
 
@@ -166,7 +236,6 @@ function BadgeDesigner() {
         ? { ...prevSelected, ...updates }
         : prevSelected
     );
-
   };
 
   const removeElement = (id: string) => {
@@ -177,14 +246,10 @@ function BadgeDesigner() {
   };
 
   const generateBadgePDF = async () => {
-    // In a real implementation, this would generate a PDF using a library like jsPDF
-    // For now, we'll just show an alert
     alert('Badge PDF generation would be implemented here');
   };
 
-  console.log("aspectRatio", aspectRatio);
-
-  if(isLoading){
+  if (isLoading) {
     return <div id="loading">Loading&#8230;</div>;
   }
 
@@ -198,48 +263,8 @@ function BadgeDesigner() {
           <ArrowLeft className="h-5 w-5 mr-2" />
           Back to Event
         </button>
+
         <div className="flex items-center space-x-4">
-          <select
-            value={orientation}
-            // onChange={(e) => setOrientation(e.target.value as any)}
-            onChange={(e) => {
-              const newOrientation = e.target.value as 'Landscape' | 'Portrait';
-              setOrientation(newOrientation);
-              // Reset paper size to the first option of the new orientation
-              const firstOptionValue = paperSizeOptions[newOrientation][0].value;
-              setPaperSize(firstOptionValue);
-            }}
-            className="block w-40 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-          >
-            <option value="Landscape">Landscape</option>
-            <option value="Portrait">Portrait</option>
-          </select>
-
-
-          <select
-            value={paperSize}
-            // onChange={(e) => setPaperSize(e.target.value)}
-            onChange={(e) => {
-              const newPaperSize = e.target.value;
-              setPaperSize(newPaperSize);
-              
-              // Find and set the corresponding width and height
-              const selectedOption = findPaperSizeOption(orientation, newPaperSize);
-              if (selectedOption) {
-                setAspectWidth(selectedOption.width);
-                setAspectHeight(selectedOption.height);
-              }
-            }}
-            className="block w-40 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-          >
-            {paperSizeOptions[orientation].map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-
-
           <button
             onClick={generateBadgePDF}
             className="flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
@@ -250,8 +275,152 @@ function BadgeDesigner() {
         </div>
       </div>
 
+      <div className="col-span-9 p-4 bg-gray-50">
+        <div className="bg-white rounded-xl shadow-lg border border-gray-100 mb-6">
+          <div className="p-6">
 
-      <div className="grid grid-cols-12 gap-4">
+            <div className="grid md:grid-cols-3 gap-6">
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700">Page Orientation</label>
+                <select
+                  value={orientation}
+                  onChange={(e) => {
+                    const newOrientation = e.target.value as 'Landscape' | 'Portrait';
+                    setOrientation(newOrientation);
+                    const firstOptionValue = paperSizeOptions[newOrientation][0].value;
+                    setPaperSize(firstOptionValue);
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ease-in-out"
+                >
+                  <option value="Landscape">Landscape</option>
+                  <option value="Portrait">Portrait</option>
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700">Paper Size</label>
+                <select
+                  value={paperSize}
+                  onChange={(e) => {
+                    const newPaperSize = e.target.value;
+                    setPaperSize(newPaperSize);
+
+                    // Find and set the corresponding width and height
+                    const selectedOption = findPaperSizeOption(orientation, newPaperSize);
+                    if (selectedOption) {
+                      setAspectWidth(selectedOption.width);
+                      setAspectHeight(selectedOption.height);
+                    }
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ease-in-out"
+                >
+                  {paperSizeOptions[orientation].map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {selectedElement && (
+              <div className="mt-6 border-t border-gray-200 pt-6">
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <h3 className="text-md font-semibold text-gray-800">Element Properties</h3>
+                    {(selectedElement && ["email", "image", "number", "qr", "date", "select", "text"].includes(selectedElement.type)) && (
+
+                      <div className="space-y-4">
+                        <input
+                          type="text"
+                          placeholder="Content"
+                          value={selectedElement.content}
+                          onChange={(e) =>
+                            selectedElement.isCustom
+                              ? updateElement(selectedElement.id, { content: e.target.value })
+                              : null
+                          }
+                          disabled={!selectedElement.isCustom}
+                          className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ease-in-out outline-none
+                    ${!selectedElement.isCustom ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                        />
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-xs text-gray-600">Font Size</label>
+                            <input
+                              type="number"
+                              placeholder="Font Size"
+                              value={selectedElement.fontSize}
+                              onChange={(e) =>
+                                updateElement(selectedElement.id, { fontSize: Number(e.target.value) })
+                              }
+                              className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ease-in-out outline-none"
+                            />
+                          </div>
+                          <div className="relative">
+                            <label className="block text-xs text-gray-600">Color</label>
+                            <input
+                              type="color"
+                              value={selectedElement.color}
+                              onChange={(e) =>
+                                updateElement(selectedElement.id, { color: e.target.value })
+                              }
+                              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full h-full opacity-0 cursor-pointer"
+                            />
+                            <div
+                              className="mt-2 w-full h-10 border border-gray-300 rounded-md shadow-sm"
+                              style={{ backgroundColor: selectedElement.color }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-4">
+                    <h3 className="text-md font-semibold text-gray-800">Size and Actions</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="block text-xs text-gray-600">Width</label>
+                        <input
+                          type="number"
+                          value={selectedElement.width}
+                          onChange={(e) =>
+                            updateElement(selectedElement.id, { width: Number(e.target.value) })
+                          }
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ease-in-out outline-none"
+                          placeholder="Width"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="block text-xs text-gray-600">Height</label>
+                        <input
+                          type="number"
+                          value={selectedElement.height}
+                          onChange={(e) =>
+                            updateElement(selectedElement.id, { height: Number(e.target.value) })
+                          }
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ease-in-out outline-none"
+                          placeholder="Height"
+                        />
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => removeElement(selectedElement.id)}
+                      className="w-full mt-4 px-4 py-2 bg-red-50 text-red-600 border border-red-200 rounded-md hover:bg-red-100 transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-red-300"
+                    >
+                      Remove Element
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* <div className="grid grid-cols-12 gap-4">
         <div className="col-span-3 bg-white rounded-lg shadow">
           <div className="p-4 border-b border-gray-200">
             <h3 className="text-lg font-medium text-gray-900">Elements</h3>
@@ -263,18 +432,30 @@ function BadgeDesigner() {
             >
               Add Text
             </button>
-            <button
-              onClick={() => addElement('Demo QR', 'qr')}
-              className="w-full flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-            >
-              Add QR Code
-            </button>
-            <button
-              onClick={() => addElement('Demi Image', 'image')}
-              className="w-full flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-            >
-              Add Image
-            </button>
+
+            <div className="grid grid-cols-2 gap-4">
+              <button
+                onClick={() => setUrlModalType('qr')}
+                className="w-full flex items-center justify-center px-4 py-2 border border-blue-300 shadow-sm text-sm font-medium rounded-md text-blue-700 bg-white hover:bg-blue-50 transition-colors"
+              >
+                <QrCodeIcon className="mr-2 h-5 w-5" />
+                Add QR Code
+              </button>
+              <button
+                onClick={() => setUrlModalType('image')}
+                className="w-full flex items-center justify-center px-4 py-2 border border-green-300 shadow-sm text-sm font-medium rounded-md text-green-700 bg-white hover:bg-green-50 transition-colors"
+              >
+                <ImageIcon className="mr-2 h-5 w-5" />
+                Add Image
+              </button>
+            </div>
+
+            <URLInputModal
+              isOpen={urlModalType !== null}
+              onClose={() => setUrlModalType(null)}
+              type={urlModalType || 'image'}
+              onSubmit={handleAddElementWithURL}
+            />
 
             <div className="mt-8">
               <h4 className="text-sm font-medium text-gray-900 mb-2">Available Fields</h4>
@@ -293,7 +474,7 @@ function BadgeDesigner() {
           </div>
         </div>
 
-        <div className="col-span-9">
+        <div className='col-span-9'>
           <div
             id="badge-container"
             className="bg-white rounded-lg shadow p-4"
@@ -327,149 +508,146 @@ function BadgeDesigner() {
                 }}
                 onMouseDown={(e) => handleMouseDown(e, element)}
               >
-                {element.content}
+                {element.type === 'qr' ? (
+                  <QRCode
+                    value={element.content}
+                    size={Math.min(element.width, element.height)}
+                    style={{ maxWidth: '100%', maxHeight: '100%' }}
+                  />
+                ) : element.type === 'image' ? (
+                  <img
+                    src={element.content}
+                    alt="Badge Element"
+                    style={{
+                      maxWidth: '100%',
+                      maxHeight: '100%',
+                      objectFit: 'contain'
+                    }}
+                  />
+                ) : (
+                  element.content
+                )}
               </div>
             ))}
           </div>
         </div>
+      </div> */}
 
-      {/*  <div className="col-span-1 bg-white rounded-lg shadow">
-          <div className="p-4 border-b border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900">Properties</h3>
-          </div>
-          <div className="p-4">
-
-            <div>
-              <p>Page Orientation:</p>
-              <select
-            value={orientation}
-            onChange={(e) => setOrientation(e.target.value as any)}
-            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md bg-red-500"
-          >
-            <option value="Landscape">Landscape</option>
-            <option value="Portrait">Portrait</option>
-          </select>
-            </div>
-         
-
-         <div className='my-3'>
-          <p>Paper Size:</p>
-             <select
-            value={paperSize}
-            onChange={(e) => setPaperSize(e.target.value)}
-            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md  bg-yellow-500"
-          >
-            {paperSizeOptions[orientation].map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-         </div>
-
-         
-            {selectedElement && (
-              <div className="space-y-4">
-                {(selectedElement && ["email", "image", "number", "qr", "date", "select", "text"].includes(selectedElement.type)) && (
-                  <>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Content</label>
-                      <input
-                        type="text"
-                        value={selectedElement.content}
-                        onChange={(e) =>
-                          selectedElement.isCustom
-                            ? updateElement(selectedElement.id, { content: e.target.value })
-                            : null
-                        }
-                        disabled={!selectedElement.isCustom}
-                        className={`mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm  ${!selectedElement.isCustom ? 'bg-gray-100 cursor-not-allowed' : ''}`}
-                      />
-                      {!selectedElement.isCustom && (
-                        <p className="text-xs text-gray-500 mt-1">
-                          This field cannot be edited as it was added from available fields.
-                        </p>
-                      )}
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Font Size</label>
-                      <input
-                        type="number"
-                        value={selectedElement.fontSize}
-                        onChange={(e) =>
-                          // selectedElement.isCustom
-                             updateElement(selectedElement.id, { fontSize: Number(e.target.value) })
-                            // : null
-                        }
-                        // disabled={!selectedElement.isCustom}
-                        className={`mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm 
-                          `}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Color</label>
-                      <input
-                        type="color"
-                        value={selectedElement.color}
-                        onChange={(e) =>
-                          // selectedElement.isCustom
-                             updateElement(selectedElement.id, { color: e.target.value })
-                            // : null
-                        }
-                        // disabled={!selectedElement.isCustom}
-                        className={`mt-1 block w-full h-8 
-                          `}
-                      />
-                    </div>
-                   </>
-                )}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Size</label>
-                  <div className="grid grid-cols-2 gap-4 mt-1">
-                    <input
-                      type="number"
-                      value={selectedElement.width}
-        //               onChange={(e) => 
-        //                 // selectedElement.isCustom
-        //                    updateElement(selectedElement.id, { width: Number(e.target.value) })
-        //                   // : null
-        //               }
-        //               // disabled={!selectedElement.isCustom}
-        //               className={`block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm 
-        //                 `}
-        //               placeholder="Width"
-        //             />
-        //             <input
-        //               type="number"
-        //               value={selectedElement.height}
-        //               onChange={(e) =>
-        //                 // selectedElement.isCustom
-        //                   updateElement(selectedElement.id, { height: Number(e.target.value) })
-        //                   // : null
-        //               }
-        //               // disabled={!selectedElement.isCustom}
-        //               className={`block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm 
-        //                 `}
-        //               placeholder="Height"
-        //             />
-        //           </div>
-        //         </div>
-
-        //         <button
-        //           onClick={() => removeElement(selectedElement.id)}
-        //           disabled={!selectedElement.isCustom}
-        //           className={`w-full mt-4 px-4 py-2 border border-red-300 shadow-sm text-sm font-medium rounded-md 
-        //             ${selectedElement.isCustom
-        //               ? 'text-red-700 bg-white hover:bg-red-50'
-        //               : 'text-gray-400 bg-gray-100 cursor-not-allowed'}`}
-        //         >
-        //           {selectedElement.isCustom ? 'Remove Element' : 'Cannot Remove'}
-        //         </button>
-        //       </div>
-        //     )}
-        //   </div>
-        // </div>*/}
+        {/* Main content grid - use responsive grid */}
+  <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+    {/* Elements Sidebar - full width on mobile, 1/4 on larger screens */}
+    <div className="lg:col-span-3 bg-white rounded-lg shadow order-2 lg:order-1">
+      <div className="p-4 border-b border-gray-200">
+        <h3 className="text-lg font-medium text-gray-900">Elements</h3>
       </div>
+      <div className="p-4">
+        <button
+          onClick={() => addElement('Demo text', 'text')}
+          className="w-full flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+        >
+          Add Text
+        </button>
+
+        <div className="grid grid-cols-2 gap-4 mt-4">
+          <button
+            onClick={() => setUrlModalType('qr')}
+            className="w-full flex items-center justify-center px-4 py-2 border border-blue-300 shadow-sm text-sm font-medium rounded-md text-blue-700 bg-white hover:bg-blue-50 transition-colors"
+          >
+            <QrCodeIcon className="mr-2 h-5 w-5" />
+            Add QR
+          </button>
+          <button
+            onClick={() => setUrlModalType('image')}
+            className="w-full flex items-center justify-center px-4 py-2 border border-green-300 shadow-sm text-sm font-medium rounded-md text-green-700 bg-white hover:bg-green-50 transition-colors"
+          >
+            <ImageIcon className="mr-2 h-5 w-5" />
+            Add Image
+          </button>
+        </div>
+
+        <URLInputModal
+          isOpen={urlModalType !== null}
+          onClose={() => setUrlModalType(null)}
+          type={urlModalType || 'image'}
+          onSubmit={handleAddElementWithURL}
+        />
+
+        <div className="mt-8">
+          <h4 className="text-sm font-medium text-gray-900 mb-2">Available Fields</h4>
+          <div className="space-y-2 max-h-64 overflow-y-auto">
+            {formFields.map((field) => (
+              <div
+                key={field.id}
+                className="text-sm text-gray-600 p-2 bg-gray-50 rounded cursor-pointer hover:bg-gray-100"
+                onClick={() => addElement(field.label, field.field_type, false)}
+              >
+                {field.label}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {/* Badge Container - full width on mobile, 3/4 on larger screens */}
+    <div className='lg:col-span-9 order-1 lg:order-2'>
+      <div
+        id="badge-container"
+        className="bg-white rounded-lg shadow p-4 aspect-video"
+        style={{
+          width: '100%',
+          maxHeight: '70vh', // Responsive height
+          position: 'relative',
+        }}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+      >
+        {elements.map((element) => (
+          <div
+            key={element.id}
+            style={{
+              position: 'absolute',
+              left: `${element.x}px`,
+              top: `${element.y}px`,
+              width: `${element.width}px`,
+              height: `${element.height}px`,
+              border: selectedElement?.id === element.id ? '2px solid #4f46e5' : '1px dashed #e5e7eb',
+              cursor: 'move',
+              backgroundColor: element.type === 'qr' ? '#f3f4f6' : 'transparent',
+              fontSize: `${element.fontSize}px`,
+              fontFamily: element.fontFamily,
+              color: element.color,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+            onMouseDown={(e) => handleMouseDown(e, element)}
+          >
+            {element.type === 'qr' ? (
+              <QRCode
+                value={element.content}
+                size={Math.min(element.width, element.height)}
+                style={{ maxWidth: '100%', maxHeight: '100%' }}
+              />
+            ) : element.type === 'image' ? (
+              <img
+                src={element.content}
+                alt="Badge Element"
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '100%',
+                  objectFit: 'contain'
+                }}
+              />
+            ) : (
+              element.content
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
     </div>
   );
 }

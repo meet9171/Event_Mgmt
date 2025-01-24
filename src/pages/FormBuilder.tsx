@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Grip, Plus, X, Save, ArrowLeft } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { v4 as uuidv4 } from 'uuid';
+
 const fieldSchema = z.object({
   label: z.string().min(1, 'Label is required'),
   field_type: z.enum(['text', 'select', 'number', 'date', 'email']),
@@ -20,9 +18,8 @@ type FormField = z.infer<typeof fieldSchema>;
 
 function FormBuilder() {
   const { eventId } = useParams<{ eventId: string }>();
-  console.log("eventId============",eventId);
-  
   const navigate = useNavigate();
+
   const [isLoading, setIsLoading] = useState(false);
   const [fields, setFields] = useState<FormField[]>([
     {
@@ -60,39 +57,37 @@ function FormBuilder() {
         return;
       }
 
-      // Prepend Name and Email fields if not already present
       const fetchedFields = data || [];
 
-           // Check if Name and Email fields are already customized
-           const nameField = fetchedFields.find(f => f.order_index === 0);
-           const emailField = fetchedFields.find(f => f.order_index === 1);
+      const nameField = fetchedFields.find(f => f.order_index === 0);
+      const emailField = fetchedFields.find(f => f.order_index === 1);
 
-           const updatedFields = nameField && emailField 
-           ? [
-               nameField,
-               emailField,
-               ...fetchedFields.filter(f => f.order_index >= 2)
-             ]
-           : [
-               {
-                 label: 'Name',
-                 field_type: 'text',
-                 placeholder: 'Your Name',
-                 is_required: true,
-                 validation_rules: {},
-                 order_index: 0,
-               },
-               {
-                 label: 'Email',
-                 field_type: 'email',
-                 placeholder: 'Your Email',
-                 is_required: true,
-                 validation_rules: {},
-                 order_index: 1,
-               },
-        ...fetchedFields.filter(f => f.order_index >= 2)
-      ];
-      
+      const updatedFields = nameField && emailField
+        ? [
+          nameField,
+          emailField,
+          ...fetchedFields.filter(f => f.order_index >= 2)
+        ]
+        : [
+          {
+            label: 'Name',
+            field_type: 'text',
+            placeholder: 'Your Name',
+            is_required: true,
+            validation_rules: {},
+            order_index: 0,
+          },
+          {
+            label: 'Email',
+            field_type: 'email',
+            placeholder: 'Your Email',
+            is_required: true,
+            validation_rules: {},
+            order_index: 1,
+          },
+          ...fetchedFields.filter(f => f.order_index >= 2)
+        ];
+
       setIsLoading(false);
       setFields(updatedFields);
     };
@@ -111,37 +106,30 @@ function FormBuilder() {
       order_index: fields.length,
     };
 
-    console.log("new field",newField);
-    
     setFields([...fields.slice(0, 2), ...fields.slice(2), newField]);
   };
 
   const removeField = (index: number) => {
-    // Prevent removing Name and Email fields
     if (index < 2) return;
     setFields(fields.filter((_, i) => i !== index));
   };
 
   const updateField = (index: number, updates: Partial<FormField>) => {
-    // Remove restriction on modifying Name and Email fields
     const updatedFields = [...fields];
-    updatedFields[index] = { 
-      ...updatedFields[index], 
+    updatedFields[index] = {
+      ...updatedFields[index],
       ...updates,
-      // Ensure these fields remain required
-      is_required: true 
+      is_required: true
     };
     setFields(updatedFields);
   };
 
   const handleDragStart = (index: number) => {
-    // Prevent dragging Name and Email fields
     if (index < 2) return;
     setDraggedField(index);
   };
 
   const handleDragOver = (e: React.DragEvent, index: number) => {
-    // Prevent dragging Name and Email fields
     if (index < 2 || draggedField === null || draggedField === index || draggedField < 2) return;
 
     e.preventDefault();
@@ -157,19 +145,17 @@ function FormBuilder() {
     setFields(updatedFields);
     setDraggedField(index);
   };
-  
+
   const saveForm = async () => {
     if (!eventId) return;
 
     setIsLoading(true);
     try {
-      // Delete existing fields
       await supabase
         .from('form_fields')
         .delete()
         .eq('event_id', eventId);
 
-      // Insert new fields, starting from index 2 (after Name and Email)
       const { error } = await supabase
         .from('form_fields')
         .insert(
@@ -178,16 +164,6 @@ function FormBuilder() {
             event_id: eventId,
           }))
         );
-      // const fieldsToSave = fields.map((field) => ({
-      //   ...field,
-      //   event_id: eventId,
-      // }));
-
-      // Insert new fields
-      // const { error } = await supabase
-      //   .from('form_fields')
-      //   .insert(fieldsToSave);
-
 
       if (error) throw error;
       setIsLoading(false);
@@ -198,7 +174,7 @@ function FormBuilder() {
     }
   };
 
-  if(isLoading){
+  if (isLoading) {
     return <div id="loading">Loading&#8230;</div>;
   }
 
@@ -289,11 +265,11 @@ function FormBuilder() {
                         onChange={(e) => updateField(index, { label: e.target.value })}
                         className={`block w-full text-sm font-medium text-gray-900 border-0 border-b border-transparent bg-transparent focus:border-indigo-600 focus:ring-0 ${index < 2 ? 'cursor-default' : ''}`}
                         placeholder="Field Label"
-                        // readOnly={index < 2}
+                      // readOnly={index < 2}
                       />
                       <span className="text-xs text-gray-500">
                         {
-                         `${field.field_type.charAt(0).toUpperCase() + field.field_type.slice(1)} Field`}
+                          `${field.field_type.charAt(0).toUpperCase() + field.field_type.slice(1)} Field`}
                         {index < 2 && ' (Required)'}
                       </span>
                     </div>
@@ -314,7 +290,6 @@ function FormBuilder() {
                     onChange={(e) => updateField(index, { placeholder: e.target.value })}
                     className={`block w-full text-sm text-gray-700 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 ${index < 2 ? 'cursor-default' : ''}`}
                     placeholder="Placeholder text"
-                    // readOnly={index < 2}
                   />
                 </div>
 

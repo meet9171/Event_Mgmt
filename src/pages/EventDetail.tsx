@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
-import { Calendar, MapPin, Users, Clock, QrCode, Edit } from 'lucide-react';
+import { Calendar, MapPin, Users, Clock, QrCode, Edit, ArrowLeft } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import QRCode from 'qrcode.react';
 import { formatInTimeZone } from 'date-fns-tz';
@@ -37,6 +37,8 @@ function EventDetail() {
   const [event, setEvent] = useState<Event | null>(null);
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [showQR, setShowQR] = useState(false);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!eventId) return;
@@ -76,13 +78,21 @@ function EventDetail() {
 
   const publicUrl = `${window.location.origin}/e/${event?.id}`;
 
-  if(!event){
+  if (!event) {
     return <div id="loading">Loading&#8230;</div>;
   }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="space-y-6">
+
+        <button
+          onClick={() => navigate(`/dashboard`)}
+          className="flex items-center text-gray-600 hover:text-gray-900"
+        >
+          <ArrowLeft className="h-5 w-5 mr-2" />
+          Back to Event
+        </button>
         {/* Event Header */}
         <div className="bg-white shadow overflow-hidden sm:rounded-lg">
           <div className="px-4 py-5 sm:px-6">
@@ -139,7 +149,6 @@ function EventDetail() {
             </dl>
           </div>
 
-
           <div className="border-t border-gray-200 px-4 py-5 sm:px-6">
             {showQR && (
               <div className="mb-6 flex justify-center">
@@ -157,12 +166,8 @@ function EventDetail() {
                   Date & Time
                 </dt>
                 <dd className="mt-1 text-sm text-gray-900">
-                  
-                    
-                      {formatInTimeZone(new Date(event.start_date), 'Asia/Kolkata', 'yyyy-MM-dd HH:mm:ssXXX')} -{' '}
-                      {formatInTimeZone(new Date(event.end_date), 'Asia/Kolkata', 'yyyy-MM-dd HH:mm:ssXXX')}
-                    
-                  
+                  {formatInTimeZone(new Date(event.start_date), 'Asia/Kolkata', 'yyyy-MM-dd HH:mm:ssXXX')} -{' '}
+                  {formatInTimeZone(new Date(event.end_date), 'Asia/Kolkata', 'yyyy-MM-dd HH:mm:ssXXX')}
                 </dd>
               </div>
               <div className="sm:col-span-1">

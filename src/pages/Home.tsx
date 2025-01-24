@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import { useEffect } from 'react'
 import { Navbar } from '../components/Navbar';
 import { HeroSection } from '../components/HeroSection';
 import { FeaturesGrid } from '../components/FeaturesGrid';
@@ -31,7 +31,7 @@ export default function Home() {
         return () => observer.disconnect();
       }, []);
   return (
-    <main className="min-h-screen bg-white px-10">
+    <main className="min-h-screen bg-white">
       <Navbar />
       <HeroSection />
       <FeaturesGrid />

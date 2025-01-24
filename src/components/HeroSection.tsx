@@ -1,24 +1,9 @@
-import React from "react";
-import { Calendar, ArrowRight, Play } from "lucide-react";
+import { ArrowRight, Play } from "lucide-react";
 import { motion } from "framer-motion";
 
 export const HeroSection = () => {
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden bg-gradient-to-br ffrom-teal-50 to-purple-50">
-      {/* Video Background */}
-      {/* <div className="absolute inset-0 z-0">
-        <video
-          className="object-cover w-full h-full opacity-20"
-          autoPlay
-          muted
-          loop
-          playsInline
-        >
-          <source src="https://player.vimeo.com/external/434045526.sd.mp4?s=c27eecc69a27dbc4ff2b87d38afc35f1a9e7c02d" type="video/mp4" />
-        </video>
-      </div> */}
-
-      {/* Floating background elements */}
       <motion.div
         className="absolute inset-0 overflow-hidden -z-10"
         initial={{ opacity: 0 }}
@@ -74,33 +59,6 @@ export const HeroSection = () => {
 
           <div className="hidden lg:block">
             <img src="/hero.svg" alt="Event Management" />
-
-            {/* <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 transform hover:scale-[1.02] transition-transform duration-300">
-              <div className="bg-white rounded-xl shadow-xl p-6">
-                <Calendar className="w-12 h-12 text-[#6B46C1] mb-4" />
-                <h3 className="text-xl font-semibold text-gray-800 mb-2">
-                  Interactive Demo
-                </h3>
-                <p className="text-gray-600 mb-4">
-                  Experience how easy it is to manage your next event
-                </p>
-                <div className="space-y-3">
-                  {[1, 2, 3].map((item) => (
-                    <div key={item} className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
-                        <span className="text-[#6B46C1] font-semibold">{item}</span>
-                      </div>
-                      <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-[#319795] rounded-full"
-                          style={{ width: `${item * 25}%` }}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div> */}
           </div>
         </div>
       </div>

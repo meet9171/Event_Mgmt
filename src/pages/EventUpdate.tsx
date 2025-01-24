@@ -30,10 +30,6 @@ function EventUpdate() {
   const { eventId } = useParams<{ eventId: string }>();
   const [isLoading, setIsLoading] = useState(false);
 
-
-  console.log("eventId",eventId);
-  console.log("user",user);  
-
   const { register, handleSubmit, formState: { errors }, reset } = useForm<EventForm>({
     resolver: zodResolver(eventSchema),
     defaultValues: {
@@ -99,7 +95,7 @@ function EventUpdate() {
     }
   };
 
-  if(isLoading){
+  if (isLoading) {
     return <div id="loading">Loading&#8230;</div>;
   }
 

@@ -1,6 +1,6 @@
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, Calendar, CalendarRange, Cloud, Lock, Mail } from 'lucide-react';
+import { CalendarRange, Lock, Mail } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
@@ -31,7 +31,6 @@ function Login() {
     }
   };
 
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-teal-50 to-purple-50 flex items-center justify-center p-4">
       <motion.div
@@ -40,7 +39,6 @@ function Login() {
         transition={{ duration: 0.5 }}
         className="w-full max-w-md"
       >
-
         <div className="bg-white rounded-2xl shadow-xl p-8">
         {errordesc && <div className='text-red-500 text-center mb-3 font-bold'>Wrong Credentials</div>}
 
@@ -58,11 +56,7 @@ function Login() {
               Sign in join public event and connect
             </p>
           </div>
-          {/* {message && (
-          <div className="text-red-500 flex justify-center text-sm font-medium mt-1 items-center mb-1">
-            <span role="alert">{message}</span>
-          </div>
-        )} */}
+
           {isLoading && <div id="loading">Loading&#8230;</div>}
 
           <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
@@ -88,11 +82,7 @@ function Login() {
                 />
               </div>
               </div>
-              {/* {formik.touched.email && formik.errors.email && (
-              <div className="text-red-500 text-sm font-medium mt-1">
-                <span role="alert">{formik.errors.email}</span>
-              </div>
-            )} */}
+
             </div>
 
             <div className="space-y-2">
@@ -117,55 +107,13 @@ function Login() {
                 />
               </div>
               </div>
-              {/* {formik.touched.password && formik.errors.password && (
-              <div className="text-red-500 text-sm font-medium mt-1">
-                <span role="alert">{formik.errors.password}</span>
-              </div>
-            )} */}
             </div>
-
-            {/* <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <input
-                id="remember-me"
-                name="remember-me"
-                type="checkbox"
-                className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
-              />
-              <label
-                htmlFor="remember-me"
-                className="ml-2 block text-sm text-gray-700"
-              >
-                Remember me
-              </label>
-            </div>
-
-            <div className="text-sm">
-              <Link
-                to="/forgot-password"
-                className="font-medium text-purple-600 hover:text-purple-500"
-              >
-                Forgot your password?
-              </Link>
-            </div>
-          </div> */}
 
             <button className="w-full bg-[#6B46C1] hover:bg-[#5F3DB8] text-white rounded-xl flex items-center justify-center py-2" type='submit'>
               Sign in
             </button>
           </form>
 
-          {/* <div className="mt-6 text-center">
-          <p className="text-sm text-gray-600">
-            Don't have an account?{" "}
-            <Link
-              to="/signup"
-              className="font-medium text-purple-600 hover:text-purple-500"
-            >
-              Sign up
-            </Link>
-          </p>
-        </div> */}
         </div>
       </motion.div>
     </div>

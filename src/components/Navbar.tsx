@@ -1,5 +1,4 @@
-import React from 'react';
-import { LogIn, Calendar } from 'lucide-react';
+import { LogIn } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import logo from "../assets/water.png"
 

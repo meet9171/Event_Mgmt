@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { format } from 'date-fns';
 import { Calendar, Users, Ticket, ArrowRight } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -54,7 +53,6 @@ function Dashboard() {
 
       setEvents(formattedEvents);
 
-      // Calculate stats
       const now = new Date();
       setStats({
         totalEvents: formattedEvents.length,
@@ -70,7 +68,6 @@ function Dashboard() {
   if(isLoading){
     return <div id="loading">Loading&#8230;</div>;
   }
-
 
   return (
     <div className="space-y-6 px-10">

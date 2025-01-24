@@ -1,4 +1,3 @@
-import React from 'react';
 import { LayoutDashboard, UserPlus, QrCode, Palette } from 'lucide-react';
 
 const features = [
