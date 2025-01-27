@@ -48,12 +48,18 @@ function PublicEvent() {
   const [event, setEvent] = useState<Event | null>(null);
   const [formFields, setFormFields] = useState<FormField[]>([]);
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
+  const [registrationData, setRegistrationData] = useState<{
+    attendee_name: string;
+    attendee_email: string;
+    form_responses?: Record<string, string>;
+  } | null>(null);
+
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-   
+
   const nameField = formFields.find(f => f.field_type === 'text' && f.order_index === 0);
   const emailField = formFields.find(f => f.field_type === 'email' && f.order_index === 1);
-  
+
   const { register, handleSubmit, formState: { errors } } = useForm<RegistrationForm>({
     resolver: zodResolver(registrationSchema),
   });
@@ -119,6 +125,13 @@ function PublicEvent() {
         .select()
         .single();
 
+      // Set registration data here
+      setRegistrationData({
+        attendee_name: data.attendee_name,
+        attendee_email: data.attendee_email,
+        form_responses: data.form_responses
+      });
+
       if (registrationError) throw registrationError;
 
       if (Object.keys(data.form_responses).length > 0) {
@@ -161,7 +174,7 @@ function PublicEvent() {
           badgeTemplate.aspectRatio,
           registrationData
         );
-      } 
+      }
 
       setRegistrationSuccess(true);
     } catch (error: any) {
@@ -173,10 +186,40 @@ function PublicEvent() {
   };
 
   if (!event) {
-    return <div>Loading...</div>;
+    return <div id="loading">Loading&#8230;</div>;
+  }
+
+  const sendemail = async () => {
+    try {
+      if (!registrationData) {
+        console.error('No registration data available');
+        return;
+      }
+
+      const res = await fetch('https://eventflow-mail-sender.onrender.com/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          to: registrationData.attendee_email,
+          subject: `Successfully Registered into ${event?.name}`,
+          name: registrationData.attendee_name,
+          message: "Thank you for connecting with EventFlow! We're excited to have you on board. If you have any questions or need assistance, feel free to reach out to us.",
+        }),
+      });
+      const jsonRes = await res.json();
+      console.log(jsonRes);
+    } catch (error) {
+      console.error('Error sending email:', error);
+      alert("Invalid Email, Please check and try again");
+    }
   }
 
   if (registrationSuccess) {
+
+    sendemail();
+
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
         <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
@@ -191,6 +234,8 @@ function PublicEvent() {
     );
   }
 
+  console.log("registrationData",registrationData);
+  
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
@@ -204,14 +249,14 @@ function PublicEvent() {
               />
             </div>
           )}
-          
+
           <div className="bg-white shadow overflow-hidden sm:rounded-lg">
             <div className="px-4 py-5 sm:px-6">
               <div className="flex items-center">
                 {event.logo_url && (
                   <img
                     src={event.logo_url}
-                    alt=""
+                    alt="Event Logo"
                     className="h-12 w-12 rounded-full mr-4"
                   />
                 )}
@@ -219,7 +264,7 @@ function PublicEvent() {
               </div>
               <p className="mt-4 text-gray-600">{event.description}</p>
             </div>
-            
+
             <div className="border-t border-gray-200 px-4 py-5 sm:px-6">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="flex items-center">
@@ -259,13 +304,14 @@ function PublicEvent() {
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                 <div>
                   <label htmlFor="attendee_name" className="block text-sm font-medium text-gray-700">
-                  {nameField?.label || 'Name'}
+                    {nameField?.label || 'Name'}
+                    <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     {...register('attendee_name')}
                     placeholder={nameField?.placeholder || 'Your Name'}
-
+                    required
                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                   />
                   {errors.attendee_name && (
@@ -275,14 +321,15 @@ function PublicEvent() {
 
                 <div>
                   <label htmlFor="attendee_email" className="block text-sm font-medium text-gray-700">
-                  {emailField?.label || 'Email'}
-
+                    {emailField?.label || 'Email'}
+                  <span className="text-red-500">*</span>
                   </label>
+
                   <input
                     type="email"
                     {...register('attendee_email')}
                     placeholder={emailField?.placeholder || 'Your Email'}
-
+                    required
                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                   />
                   {errors.attendee_email && (
@@ -301,30 +348,34 @@ function PublicEvent() {
                         type="text"
                         {...register(`form_responses.${field.id}`)}
                         placeholder={field.placeholder}
+                        required={field.is_required}
                         className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                       />
                     )}
-                      {field.field_type === 'email' && (
+                    {field.field_type === 'email' && (
                       <input
                         type="email"
                         {...register(`form_responses.${field.id}`)}
                         placeholder={field.placeholder}
+                        required={field.is_required}
                         className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                       />
                     )}
-                      {field.field_type === 'date' && (
+                    {field.field_type === 'date' && (
                       <input
                         type="date"
                         {...register(`form_responses.${field.id}`)}
                         placeholder={field.placeholder}
+                        required={field.is_required}
                         className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                       />
                     )}
-                      {field.field_type === 'number' && (
+                    {field.field_type === 'number' && (
                       <input
                         type="number"
                         {...register(`form_responses.${field.id}`)}
                         placeholder={field.placeholder}
+                        required={field.is_required}
                         className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                       />
                     )}
@@ -332,6 +383,7 @@ function PublicEvent() {
                       <select
                         {...register(`form_responses.${field.id}`)}
                         className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                        required={field.is_required}
                       >
                         <option value="">Select an option</option>
                         {field.options.map((option) => (
@@ -348,9 +400,8 @@ function PublicEvent() {
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className={`inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${
-                      isLoading ? 'opacity-50 cursor-not-allowed' : ''
-                    }`}
+                    className={`inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''
+                      }`}
                   >
                     {isLoading ? 'Registering...' : 'Register'}
                   </button>

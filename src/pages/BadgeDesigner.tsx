@@ -23,7 +23,7 @@ interface BadgeElement {
   fontFamily?: string;
   color?: string;
   field?: string;
-  isCustom: boolean; // New flag to distinguish custom vs predefined fields
+  isCustom: boolean;
 }
 
 function BadgeDesigner() {
@@ -45,21 +45,100 @@ function BadgeDesigner() {
   const [aspectHeight, setAspectHeight] = useState('56.25%');
 
   // Define paper size options based on orientation
+  // const paperSizeOptions = {
+  //   Landscape: [
+  //     { width: '100%', height: '98.44%', label: 'Landscape Standard (16:9)', value: '16:9' },
+  //     { width: '25%', height: '28.125%', label: 'Classic Landscape (4:3)', value: '4:3' },
+  //     { width: '18.75%', height: '12.5%', label: '3:2', value: '3:2' },
+  //     { width: '25%', height: '37.5%', label: 'Photo Standard (4:6)', value: '4:6' },
+  //     { width: '15%', height: '15%', label: 'Square Variant (2.4:2.4)', value: '2.4:2.4' },
+  //     { width: '6.875%', height: '6.875%', label: 'Perfect Square (1.1:1.1)', value: '1.1:1.1' }
+  //   ],
+  //   Portrait: [
+  //     { width: '56.25%', height: '100%', label: 'Portrait Standard (9:16)', value: '9:16' },
+  //     { width: '18.75%', height: '25%', label: 'Classic Portrait (3:4)', value: '3:4' },
+  //     { width: '12.5%', height: '18.75%', label: '2:3', value: '2:3' },
+  //     { width: '6.25%', height: '9.375%', label: 'Square Portrait (2.4:2.4)', value: '2.4:2.4' },
+  //     { width: '51.875%', height: '73.125%', label: 'Tall Cards (1:1.5)', value: '1:1.5' }
+  //   ]
+  // };
+
   const paperSizeOptions = {
     Landscape: [
-      { width: '100%', height: '98.44%', label: 'Landscape Standard (16:9)', value: '16:9' },
-      { width: '25%', height: '28.125%', label: 'Classic Landscape (4:3)', value: '4:3' },
-      { width: '18.75%', height: '12.5%', label: '3:2', value: '3:2' },
-      { width: '25%', height: '37.5%', label: 'Photo Standard (4:6)', value: '4:6' },
-      { width: '15%', height: '15%', label: 'Square Variant (2.4:2.4)', value: '2.4:2.4' },
-      { width: '6.875%', height: '6.875%', label: 'Perfect Square (1.1:1.1)', value: '1.1:1.1' }
+      { 
+        width: 1000, 
+        height: 562, 
+        label: 'Landscape Standard (16:9)', 
+        value: '16:9',
+        aspectRatio: 16/9,
+        recommendedSize: { width: 1600, height: 900 }
+      },
+      { 
+        width: 750, 
+        height: 562, 
+        label: 'Classic Landscape (4:3)', 
+        value: '4:3',
+        aspectRatio: 4/3,
+        recommendedSize: { width: 1200, height: 900 }
+      },
+      { 
+        width: 750, 
+        height: 500, 
+        label: '3:2 Landscape', 
+        value: '3:2',
+        aspectRatio: 3/2,
+        recommendedSize: { width: 1200, height: 800 }
+      },
+      { 
+        width: 375, 
+        height: 562, 
+        label: 'Photo Standard (4:6)', 
+        value: '4:6',
+        aspectRatio: 4/6,
+        recommendedSize: { width: 600, height: 900 }
+      },
+      { 
+        width: 500, 
+        height: 500, 
+        label: 'Square Variant (1:1)', 
+        value: '1:1',
+        aspectRatio: 1,
+        recommendedSize: { width: 800, height: 800 }
+      }
     ],
     Portrait: [
-      { width: '56.25%', height: '100%', label: 'Portrait Standard (9:16)', value: '9:16' },
-      { width: '18.75%', height: '25%', label: 'Classic Portrait (3:4)', value: '3:4' },
-      { width: '12.5%', height: '18.75%', label: '2:3', value: '2:3' },
-      { width: '6.25%', height: '9.375%', label: 'Square Portrait (2.4:2.4)', value: '2.4:2.4' },
-      { width: '51.875%', height: '73.125%', label: 'Tall Cards (1:1.5)', value: '1:1.5' }
+      { 
+        width: 562, 
+        height: 1000, 
+        label: 'Portrait Standard (9:16)', 
+        value: '9:16',
+        aspectRatio: 9/16,
+        recommendedSize: { width: 900, height: 1600 }
+      },
+      { 
+        width: 562, 
+        height: 750, 
+        label: 'Classic Portrait (3:4)', 
+        value: '3:4',
+        aspectRatio: 3/4,
+        recommendedSize: { width: 900, height: 1200 }
+      },
+      { 
+        width: 375, 
+        height: 562, 
+        label: 'Business Card (2:3)', 
+        value: '2:3',
+        aspectRatio: 2/3,
+        recommendedSize: { width: 600, height: 900 }
+      },
+      { 
+        width: 500, 
+        height: 500, 
+        label: 'Square Portrait (1:1)', 
+        value: '1:1',
+        aspectRatio: 1,
+        recommendedSize: { width: 800, height: 800 }
+      }
     ]
   };
 
@@ -595,8 +674,8 @@ function BadgeDesigner() {
         id="badge-container"
         className="bg-white rounded-lg shadow p-4 aspect-video"
         style={{
-          width: '100%',
-          maxHeight: '70vh', // Responsive height
+          width: aspectWidth,
+          height: aspectHeight,
           position: 'relative',
         }}
         onMouseMove={handleMouseMove}

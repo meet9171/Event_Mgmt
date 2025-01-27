@@ -119,7 +119,7 @@ function FormBuilder() {
     updatedFields[index] = {
       ...updatedFields[index],
       ...updates,
-      is_required: true
+      // is_required: true
     };
     setFields(updatedFields);
   };
@@ -274,6 +274,25 @@ function FormBuilder() {
                       </span>
                     </div>
                   </div>
+                  <div className="mt-3 flex items-center space-x-2">
+                  {index >= 2 && (
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id={`required-${index}`}
+                        checked={field.is_required}
+                        onChange={() => updateField(index, { is_required: !field.is_required })}
+                        className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                      />
+                      <label 
+                        htmlFor={`required-${index}`} 
+                        className="ml-2 block text-sm text-gray-900"
+                      >
+                        Required Field
+                      </label>
+                    </div>
+                  )}
+                </div>
                   {index >= 2 && (
                     <button
                       onClick={() => removeField(index)}
