@@ -76,6 +76,9 @@ function PublicEvent() {
         .eq('id', eventId)
         .maybeSingle();
 
+        console.log("eventid",eventId);
+        console.log("eventdata",eventData);
+        
       if (eventError) {
         console.error('Error fetching event:', eventError);
         return;
@@ -92,9 +95,10 @@ function PublicEvent() {
         return;
       }
 
+      
       setEvent({
         ...eventData,
-        registration_count: eventData.registrations?.[0]?.count || 0,
+        // registration_count: eventData.registrations?.[0]?.count || 0,
       });
       setFormFields(fieldsData || []);
     };
@@ -243,8 +247,6 @@ function PublicEvent() {
       </div>
     );
   }
-
-  console.log("registrationData",registrationData);
   
   return (
     <div className="min-h-screen bg-gray-50">
