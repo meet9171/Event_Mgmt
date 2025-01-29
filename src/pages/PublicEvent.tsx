@@ -64,6 +64,10 @@ function PublicEvent() {
     resolver: zodResolver(registrationSchema),
   });
 
+  if (!event) {
+    return <div id="loading">Loading&#8230;</div>;
+  }
+  
   useEffect(() => {
     if (!eventId) return;
 
