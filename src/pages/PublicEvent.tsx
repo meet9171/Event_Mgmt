@@ -72,7 +72,7 @@ function PublicEvent() {
         .from('events')
         .select('*, registrations(count)')
         .eq('id', eventId)
-        .single();
+        .maybeSingle();
 
       if (eventError) {
         console.error('Error fetching event:', eventError);
