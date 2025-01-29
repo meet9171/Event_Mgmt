@@ -155,8 +155,8 @@ CREATE POLICY "Users can view own registrations"
 
 CREATE POLICY "Users can create registrations"
   ON registrations FOR INSERT
-  WITH CHECK (true);
-
+  USING (true);
+  
 -- Form responses policies
 CREATE POLICY "Users can view own responses"
   ON form_responses FOR SELECT
