@@ -110,6 +110,9 @@ ALTER TABLE form_responses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE badge_templates ENABLE ROW LEVEL SECURITY;
 
 -- Events policies
+CREATE POLICY "Users can view published events"
+  ON events FOR SELECT
+  USING (true);
 
 CREATE POLICY "Users can create events"
   ON events FOR INSERT
