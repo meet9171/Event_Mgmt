@@ -153,10 +153,12 @@ CREATE POLICY "Users can view own registrations"
     )
   );
 
-CREATE POLICY "Users can create registrations"
-  ON registrations FOR INSERT
-  USING (true);
-  
+
+CREATE POLICY "Anyone can insert into registrations"
+ON registrations
+FOR INSERT
+WITH CHECK (true);
+
 -- Form responses policies
 CREATE POLICY "Users can view own responses"
   ON form_responses FOR SELECT
