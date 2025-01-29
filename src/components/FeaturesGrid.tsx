@@ -60,7 +60,7 @@ const features = [
 
 export const FeaturesGrid = () => {
   return (
-    <section className="py-24  bg-gray-50" id="features">
+    <section className="py-24 px-5 bg-gray-50" id="features">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-4xl font-bold text-gray-900 mb-4">

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Star, Play } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const testimonials = [
   {
@@ -68,7 +69,7 @@ export const SocialProof = () => {
                 <img
                   src={testimonial.image}
                   alt={testimonial.name}
-                  className="w-16 h-16 rounded-full"
+                  className="w-16 h-16 rounded-full object-cover"
                 />
                 <div>
                   <h3 className="font-semibold text-lg">{testimonial.name}</h3>
@@ -94,9 +95,12 @@ export const SocialProof = () => {
             className="w-full h-[400px] object-cover"
           />
           <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-            <button className="w-20 h-20 bg-white rounded-full flex items-center justify-center transform transition hover:scale-110">
-              <Play className="w-8 h-8 text-[#6B46C1] ml-1" />
-            </button>
+          
+            <Link to="https://www.youtube.com/watch?v=dQw4w9WgXcQ">
+              <button className="w-20 h-20 bg-white rounded-full flex items-center justify-center transform transition hover:scale-110">
+                <Play className="w-8 h-8 text-[#6B46C1] ml-1" />
+              </button>
+            </Link>
           </div>
         </div>
       </div>

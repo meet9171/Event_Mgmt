@@ -1,7 +1,11 @@
 import React from "react";
 import { Calendar, ArrowRight } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 
 export const FinalCTA = () => {
+
+  const navigate = useNavigate();
+
   return (
     <section className="relative py-24 overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-br from-[#6B46C1] to-[#319795]" />
@@ -16,11 +20,11 @@ export const FinalCTA = () => {
         </p>
 
         <div className="flex flex-col md:flex-row gap-6 justify-center items-center">
-          <button className="bg-white text-[#6B46C1] px-8 py-4 rounded-lg font-semibold flex items-center gap-2 transform transition hover:scale-105">
+          <button className="bg-white text-[#6B46C1] px-8 py-4 rounded-lg font-semibold flex items-center gap-2 transform transition hover:scale-105" onClick={() => navigate("/login")}>
             Get Started Now <ArrowRight className="w-5 h-5" />
           </button>
 
-          <button className="flex items-center gap-2 text-white hover:text-purple-200 transition">
+          <button className="flex items-center gap-2 text-white hover:text-purple-200 transition" onClick={() => navigate("/login")}>
             <Calendar className="w-5 h-5" />
             Schedule a Demo
           </button>

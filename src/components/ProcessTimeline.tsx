@@ -34,7 +34,7 @@ export const ProcessTimeline = () => {
 
         <div className="hidden md:grid grid-cols-4 gap-8 relative">
           {/* Connection Line */}
-          <div className="absolute top-1/2 left-0 w-full h-1 bg-gray-200 -translate-y-1/2 z-0" />
+          {/* <div className="absolute top-1/2 left-0 w-full h-1 bg-gray-200 -translate-y-1/2 z-0" /> */}
 
           {steps.map((step, index) => (
             <div key={index} className="relative z-10 text-center">

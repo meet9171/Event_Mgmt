@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { ArrowLeft, X } from 'lucide-react';
 
 const eventSchema = z.object({
   name: z.string().min(1, 'Event name is required'),
@@ -15,7 +16,7 @@ const eventSchema = z.object({
   venue: z.string().min(1, 'Venue is required'),
   capacity: z.number().min(1, 'Capacity must be at least 1'),
   price: z.number().min(0, 'Price cannot be negative'),
-  currency: z.string().default('USD'),
+  currency: z.string().default('INR'),
   logo_url: z.string().optional(),
   banner_url: z.string().optional(),
   custom_color: z.string().optional(),
@@ -26,17 +27,57 @@ type EventForm = z.infer<typeof eventSchema>;
 function EventUpdate() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { id } = useParams<{ id: string }>();
   const { eventId } = useParams<{ eventId: string }>();
   const [isLoading, setIsLoading] = useState(false);
 
-  const { register, handleSubmit, formState: { errors }, reset } = useForm<EventForm>({
+  // Add state for image previews
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [bannerPreview, setBannerPreview] = useState<string | null>(null);
+  const [logoError, setLogoError] = useState<string | null>(null);
+  const [bannerError, setBannerError] = useState<string | null>(null);
+
+  const { register, handleSubmit, formState: { errors }, reset, setValue } = useForm<EventForm>({
     resolver: zodResolver(eventSchema),
     defaultValues: {
-      currency: 'USD',
+      currency: 'INR',
       event_type: 'conference',
     },
   });
+
+  // Image preview handler
+  const handleImagePreview = (
+    url: string,
+    type: 'logo' | 'banner',
+    setPreview: React.Dispatch<React.SetStateAction<string | null>>,
+    setError: React.Dispatch<React.SetStateAction<string | null>>
+  ) => {
+    setError(null);
+    setPreview(null);
+
+    if (!url) return;
+
+    const img = new Image();
+    img.onload = () => {
+      setPreview(url);
+    };
+    img.onerror = () => {
+      setError('Invalid image URL. Please check the link.');
+    };
+    img.src = url;
+  };
+
+  // Function to clear image preview
+  const clearImagePreview = (type: 'logo' | 'banner') => {
+    if (type === 'logo') {
+      setLogoPreview(null);
+      setValue('logo_url', '');
+      setLogoError(null);
+    } else {
+      setBannerPreview(null);
+      setValue('banner_url', '');
+      setBannerError(null);
+    }
+  };
 
   // Fetch existing event data when component mounts
   useEffect(() => {
@@ -60,6 +101,14 @@ function EventUpdate() {
             start_date: event.start_date ? new Date(event.start_date).toISOString().slice(0, 16) : '',
             end_date: event.end_date ? new Date(event.end_date).toISOString().slice(0, 16) : '',
           });
+
+          // Set image previews if URLs exist
+          if (event.logo_url) {
+            handleImagePreview(event.logo_url, 'logo', setLogoPreview, setLogoError);
+          }
+          if (event.banner_url) {
+            handleImagePreview(event.banner_url, 'banner', setBannerPreview, setBannerError);
+          }
         }
         setIsLoading(false);
       } catch (error) {
@@ -100,190 +149,263 @@ function EventUpdate() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto">
-      <div className="md:grid md:grid-cols-3 md:gap-6">
-        <div className="md:col-span-1">
-          <div className="px-4 sm:px-0">
-            <h3 className="text-lg font-medium leading-6 text-gray-900">Update Event</h3>
-            <p className="mt-1 text-sm text-gray-600">
-              Modify the details of your existing event. All fields marked with * are required.
-            </p>
-          </div>
+    <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <button
+        onClick={() => navigate(`/dashboard`)}
+        className="flex items-center text-gray-600 hover:text-gray-900 mb-4"
+      >
+        <ArrowLeft className="h-5 w-5 mr-2" />
+        Back to Event
+      </button>
+
+      <div className="bg-white shadow-xl rounded-xl overflow-hidden">
+        <div className="bg-[#6B46C1] p-6">
+          <h2 className="text-2xl sm:text-3xl font-bold text-white text-center">
+            Update Event
+          </h2>
+          <p className="text-sm sm:text-base text-purple-100 text-center mt-2">
+            Modify the details of your existing event. Fields marked with * are required.
+          </p>
         </div>
 
-        <div className="mt-5 md:mt-0 md:col-span-2">
-          <form onSubmit={handleSubmit(onSubmit)}>
-            <div className="shadow sm:rounded-md sm:overflow-hidden">
-              <div className="px-4 py-5 bg-white space-y-6 sm:p-6">
-                <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                    Event Name *
-                  </label>
-                  <input
-                    type="text"
-                    id="name"
-                    className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-                    {...register('name')}
-                  />
-                  {errors.name && (
-                    <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
-                  )}
-                </div>
+        <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-6">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            {/* Event Name */}
+            <div className="sm:col-span-2">
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                Event Name *
+              </label>
+              <input
+                type="text"
+                id="name"
+                placeholder="Enter event name"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-300 ease-in-out"
+                {...register('name')}
+              />
+              {errors.name && (
+                <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
+              )}
+            </div>
 
-                <div>
-                  <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-                    Description *
-                  </label>
-                  <textarea
-                    id="description"
-                    rows={3}
-                    className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-                    {...register('description')}
-                  />
-                  {errors.description && (
-                    <p className="mt-1 text-sm text-red-600">{errors.description.message}</p>
-                  )}
-                </div>
+            {/* Description */}
+            <div className="sm:col-span-2">
+              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
+                Description *
+              </label>
+              <textarea
+                id="description"
+                rows={4}
+                placeholder="Describe your event"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-300 ease-in-out"
+                {...register('description')}
+              />
+              {errors.description && (
+                <p className="mt-1 text-sm text-red-600">{errors.description.message}</p>
+              )}
+            </div>
 
-                <div className="grid grid-cols-6 gap-6">
-                  <div className="col-span-6 sm:col-span-3">
-                    <label htmlFor="event_type" className="block text-sm font-medium text-gray-700">
-                      Event Type *
-                    </label>
-                    <select
-                      id="event_type"
-                      className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                      {...register('event_type')}
-                    >
-                      <option value="conference">Conference</option>
-                      <option value="workshop">Workshop</option>
-                      <option value="seminar">Seminar</option>
-                    </select>
-                  </div>
+            {/* Event Type */}
+            <div>
+              <label htmlFor="event_type" className="block text-sm font-medium text-gray-700 mb-2">
+                Event Type *
+              </label>
+              <select
+                id="event_type"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-300 ease-in-out"
+                {...register('event_type')}
+              >
+                <option value="conference">Conference</option>
+                <option value="workshop">Workshop</option>
+                <option value="seminar">Seminar</option>
+              </select>
+            </div>
 
-                  <div className="col-span-6 sm:col-span-3">
-                    <label htmlFor="venue" className="block text-sm font-medium text-gray-700">
-                      Venue *
-                    </label>
-                    <input
-                      type="text"
-                      id="venue"
-                      className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-                      {...register('venue')}
-                    />
-                  </div>
-                </div>
+            {/* Venue */}
+            <div>
+              <label htmlFor="venue" className="block text-sm font-medium text-gray-700 mb-2">
+                Venue *
+              </label>
+              <input
+                type="text"
+                id="venue"
+                placeholder="Event location"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-300 ease-in-out"
+                {...register('venue')}
+              />
+            </div>
 
-                <div className="grid grid-cols-6 gap-6">
-                  <div className="col-span-6 sm:col-span-3">
-                    <label htmlFor="start_date" className="block text-sm font-medium text-gray-700">
-                      Start Date *
-                    </label>
-                    <input
-                      type="datetime-local"
-                      id="start_date"
-                      className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-                      {...register('start_date')}
-                    />
-                  </div>
+            {/* Start Date */}
+            <div>
+              <label htmlFor="start_date" className="block text-sm font-medium text-gray-700 mb-2">
+                Start Date *
+              </label>
+              <input
+                type="datetime-local"
+                id="start_date"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-300 ease-in-out"
+                {...register('start_date')}
+              />
+            </div>
 
-                  <div className="col-span-6 sm:col-span-3">
-                    <label htmlFor="end_date" className="block text-sm font-medium text-gray-700">
-                      End Date *
-                    </label>
-                    <input
-                      type="datetime-local"
-                      id="end_date"
-                      className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-                      {...register('end_date')}
-                    />
-                  </div>
-                </div>
+            {/* End Date */}
+            <div>
+              <label htmlFor="end_date" className="block text-sm font-medium text-gray-700 mb-2">
+                End Date *
+              </label>
+              <input
+                type="datetime-local"
+                id="end_date"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-300 ease-in-out"
+                {...register('end_date')}
+              />
+            </div>
 
-                <div className="grid grid-cols-6 gap-6">
-                  <div className="col-span-6 sm:col-span-3">
-                    <label htmlFor="capacity" className="block text-sm font-medium text-gray-700">
-                      Capacity *
-                    </label>
-                    <input
-                      type="number"
-                      id="capacity"
-                      min="1"
-                      className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-                      {...register('capacity', { valueAsNumber: true })}
-                    />
-                  </div>
+            {/* Capacity */}
+            <div>
+              <label htmlFor="capacity" className="block text-sm font-medium text-gray-700 mb-2">
+                Capacity *
+              </label>
+              <input
+                type="number"
+                id="capacity"
+                min="1"
+                placeholder="Max attendees"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-300 ease-in-out"
+                {...register('capacity', { valueAsNumber: true })}
+              />
+            </div>
 
-                  <div className="col-span-6 sm:col-span-3">
-                    <label htmlFor="price" className="block text-sm font-medium text-gray-700">
-                      Price *
-                    </label>
-                    <div className="mt-1 relative rounded-md shadow-sm">
-                      <input
-                        type="number"
-                        id="price"
-                        min="0"
-                        step="0.01"
-                        className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pr-12 sm:text-sm border-gray-300 rounded-md"
-                        {...register('price', { valueAsNumber: true })}
-                      />
-                      <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                        <span className="text-gray-500 sm:text-sm">USD</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-6 gap-6">
-                  <div className="col-span-6">
-                    <label htmlFor="logo_url" className="block text-sm font-medium text-gray-700">
-                      Logo URL
-                    </label>
-                    <input
-                      type="url"
-                      id="logo_url"
-                      className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-                      {...register('logo_url')}
-                    />
-                  </div>
-
-                  <div className="col-span-6">
-                    <label htmlFor="banner_url" className="block text-sm font-medium text-gray-700">
-                      Banner URL
-                    </label>
-                    <input
-                      type="url"
-                      id="banner_url"
-                      className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-                      {...register('banner_url')}
-                    />
-                  </div>
-
-                  <div className="col-span-6">
-                    <label htmlFor="custom_color" className="block text-sm font-medium text-gray-700">
-                      Custom Color
-                    </label>
-                    <input
-                      type="color"
-                      id="custom_color"
-                      className="mt-1 block w-full h-10 p-1"
-                      {...register('custom_color')}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="px-4 py-3 bg-gray-50 text-right sm:px-6">
-                <button
-                  type="submit"
-                  className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-[#6B46C1] hover:bg-[#613eb3] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#6B46C1]"
-                >
-                  Update Event
-                </button>
+            {/* Price */}
+            <div>
+              <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-2">
+                Price *
+              </label>
+              <div className="relative">
+                <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">
+                  ₹
+                </span>
+                <input
+                  type="number"
+                  id="price"
+                  min="0"
+                  step="0.01"
+                  placeholder="Event cost"
+                  className="w-full pl-7 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-300 ease-in-out"
+                  {...register('price', { valueAsNumber: true })}
+                />
               </div>
             </div>
-          </form>
-        </div>
+
+            {/* Logo URL */}
+            <div className="sm:col-span-2">
+              <label htmlFor="logo_url" className="block text-sm font-medium text-gray-700 mb-2">
+                Logo URL
+              </label>
+              <input
+                type="url"
+                id="logo_url"
+                placeholder="https://example.com/logo.png"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-300 ease-in-out"
+                {...register('logo_url', {
+                  onChange: (e) => handleImagePreview(
+                    e.target.value,
+                    'logo',
+                    setLogoPreview,
+                    setLogoError
+                  )
+                })}
+              />
+
+              {logoPreview && (
+                <div className="relative group mt-2">
+                  <img
+                    src={logoPreview}
+                    alt="Logo Preview"
+                    className="w-16 h-16 object-cover rounded-lg"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => clearImagePreview('logo')}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+              {logoError && (
+                <p className="mt-1 text-sm text-red-600">{logoError}</p>
+              )}
+            </div>
+
+            {/* Banner URL */}
+            <div className="sm:col-span-2">
+              <label htmlFor="banner_url" className="block text-sm font-medium text-gray-700 mb-2">
+                Banner URL
+              </label>
+              <input
+                type="url"
+                id="banner_url"
+                placeholder="https://example.com/banner.jpg"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-300 ease-in-out"
+                {...register('banner_url', {
+                  onChange: (e) => handleImagePreview(
+                    e.target.value,
+                    'banner',
+                    setBannerPreview,
+                    setBannerError
+                  )
+                })}
+              />
+              {bannerPreview && (
+                <div className="relative group mt-2">
+                  <img
+                    src={bannerPreview}
+                    alt="Banner Preview"
+                    className="w-24 h-16 object-cover rounded-lg"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => clearImagePreview('banner')}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+              {bannerError && (
+                <p className="mt-1 text-sm text-red-600">{bannerError}</p>
+              )}
+            </div>
+
+            {/* Custom Color */}
+            <div className="sm:col-span-2">
+              <label htmlFor="custom_color" className="block text-sm font-medium text-gray-700 mb-2">
+                Custom Color
+              </label>
+              <div className="flex items-center space-x-4">
+                <input
+                  type="color"
+                  id="custom_color"
+                  className="w-16 h-12 rounded-lg cursor-pointer"
+                  {...register('custom_color')}
+                />
+                <span className="text-sm text-gray-600">
+                  Choose a color for your event branding
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Submit Button */}
+          <div className="mt-8 text-right">
+            <button
+              type="submit"
+              className="w-full sm:w-auto px-6 py-3 bg-[#6B46C1] text-white font-semibold rounded-lg hover:bg-[#6B46C1] focus:outline-none focus:ring-2 focus:ring-[#6B46C1] focus:ring-offset-2 transition duration-300 ease-in-out transform hover:scale-105"
+            >
+              Update Event
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

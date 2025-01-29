@@ -33,7 +33,7 @@ function Layout() {
               </Link>
               
               <div className="ml-4 flex items-center">
-                <span className="text-gray-700 mr-4">{user?.email}</span>
+                <span className="text-gray-700 mr-4 hidden sm:block">{user?.email}</span>
                 <button
                   onClick={handleSignOut}
                   className="p-2 rounded-full text-[#6B46C1] text-bold hover:text-[#917fbd]"

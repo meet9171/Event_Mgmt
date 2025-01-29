@@ -206,6 +206,10 @@ function PublicEvent() {
           subject: `Successfully Registered into ${event?.name}`,
           name: registrationData.attendee_name,
           message: "Thank you for connecting with EventFlow! We're excited to have you on board. If you have any questions or need assistance, feel free to reach out to us.",
+          data: {
+            email: registrationData.attendee_email,
+            otherField: registrationData.form_responses
+        }
         }),
       });
       const jsonRes = await res.json();

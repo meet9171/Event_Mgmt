@@ -179,71 +179,47 @@ function FormBuilder() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-      <div className="flex justify-between items-center mb-8">
+    <div className="container mx-auto px-4 py-8 max-w-5xl">
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-8 space-y-4 sm:space-y-0">
         <button
           onClick={() => navigate(`/events/${eventId}`)}
-          className="flex items-center text-gray-600 hover:text-gray-900"
+          className="flex items-center text-gray-600 hover:text-gray-900 transition-colors duration-300"
         >
           <ArrowLeft className="h-5 w-5 mr-2" />
           Back to Event
         </button>
         <button
           onClick={saveForm}
-          className="flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
+          disabled={isLoading}
+          className="flex items-center px-6 py-3 bg-[#6B46C1] text-white rounded-lg hover:bg-[#5A3F9E] focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-300 ease-in-out transform hover:scale-105 disabled:opacity-50"
         >
-          <Save className="h-4 w-4 mr-2" />
+          <Save className="h-5 w-5 mr-2" />
           Save Form
         </button>
       </div>
 
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-4 py-5 border-b border-gray-200 sm:px-6">
-          <h3 className="text-lg leading-6 font-medium text-gray-900">
+      <div className="bg-white shadow-xl rounded-xl overflow-hidden">
+        <div className="bg-[#6B46C1] p-6">
+          <h3 className="text-2xl sm:text-3xl font-bold text-white text-center">
             Registration Form Builder
           </h3>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="text-sm sm:text-base text-purple-100 text-center mt-2">
             Design your event registration form by adding and arranging fields.
           </p>
         </div>
 
-        <div className="px-4 py-5 sm:p-6">
-          <div className="mb-6 flex flex-wrap gap-2">
-            <button
-              onClick={() => addField('text')}
-              className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Text Field
-            </button>
-            <button
-              onClick={() => addField('select')}
-              className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Dropdown
-            </button>
-            <button
-              onClick={() => addField('number')}
-              className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Number
-            </button>
-            <button
-              onClick={() => addField('date')}
-              className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Date
-            </button>
-            <button
-              onClick={() => addField('email')}
-              className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Email
-            </button>
+        <div className="p-6">
+          <div className="mb-6 flex flex-wrap gap-2 justify-center">
+            {['text', 'select', 'number', 'date', 'email'].map((type) => (
+              <button
+                key={type}
+                onClick={() => addField(type as FormField['field_type'])}
+                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-300"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                {type.charAt(0).toUpperCase() + type.slice(1)} Field
+              </button>
+            ))}
           </div>
 
           <div className="space-y-4">
@@ -253,61 +229,67 @@ function FormBuilder() {
                 draggable={index >= 2}
                 onDragStart={() => handleDragStart(index)}
                 onDragOver={(e) => handleDragOver(e, index)}
-                className={`bg-gray-50 p-4 rounded-lg border border-gray-200 ${index < 2 ? 'cursor-default' : 'cursor-move'}`}
+                className={`bg-gray-50 p-4 rounded-lg border border-gray-200 transition-all duration-300 ${
+                  index < 2 ? 'cursor-default' : 'cursor-move hover:shadow-md'
+                }`}
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center">
-                    {index >= 2 && <Grip className="h-5 w-5 text-gray-400 mr-3" />}
-                    <div>
+                <div className="flex flex-col sm:flex-row items-start justify-between space-y-4 sm:space-y-0">
+                  <div className="flex items-center w-full">
+                    {index >= 2 && <Grip className="h-5 w-5 text-gray-400 mr-3 hidden sm:block" />}
+                    <div className="flex-grow">
                       <input
                         type="text"
                         value={field.label}
                         onChange={(e) => updateField(index, { label: e.target.value })}
-                        className={`block w-full text-sm font-medium text-gray-900 border-0 border-b border-transparent bg-transparent focus:border-indigo-600 focus:ring-0 ${index < 2 ? 'cursor-default' : ''}`}
+                        className={`w-full text-sm font-medium text-gray-900 border-0 border-b border-transparent bg-transparent focus:border-purple-600 focus:ring-0 ${
+                          index < 2 ? 'cursor-default' : ''
+                        }`}
                         placeholder="Field Label"
-                      // readOnly={index < 2}
                       />
                       <span className="text-xs text-gray-500">
-                        {
-                          `${field.field_type.charAt(0).toUpperCase() + field.field_type.slice(1)} Field`}
+                        {`${field.field_type.charAt(0).toUpperCase() + field.field_type.slice(1)} Field`}
                         {index < 2 && ' (Required)'}
                       </span>
                     </div>
                   </div>
-                  <div className="mt-3 flex items-center space-x-2">
-                  {index >= 2 && (
-                    <div className="flex items-center">
-                      <input
-                        type="checkbox"
-                        id={`required-${index}`}
-                        checked={field.is_required}
-                        onChange={() => updateField(index, { is_required: !field.is_required })}
-                        className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                      />
-                      <label 
-                        htmlFor={`required-${index}`} 
-                        className="ml-2 block text-sm text-gray-900"
+                  
+                  <div className="flex items-center justify-between w-full sm:w-auto space-x-4">
+                    {index >= 2 && (
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          id={`required-${index}`}
+                          checked={field.is_required}
+                          onChange={() => updateField(index, { is_required: !field.is_required })}
+                          className="h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                        />
+                        <label 
+                          htmlFor={`required-${index}`} 
+                          className="ml-2 block text-sm text-gray-900"
+                        >
+                          Required
+                        </label>
+                      </div>
+                    )}
+                    {index >= 2 && (
+                      <button
+                        onClick={() => removeField(index)}
+                        className="text-red-500 hover:text-red-700 transition-colors"
                       >
-                        Required Field
-                      </label>
-                    </div>
-                  )}
+                        <X className="h-5 w-5" />
+                      </button>
+                    )}
+                  </div>
                 </div>
-                  {index >= 2 && (
-                    <button
-                      onClick={() => removeField(index)}
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      <X className="h-5 w-5" />
-                    </button>
-                  )}
-                </div>
+                
                 <div className="mt-3">
                   <input
-                    type={field.field_type}
+                    type={field.field_type === 'select' ? 'text' : field.field_type}
                     value={field.placeholder}
                     onChange={(e) => updateField(index, { placeholder: e.target.value })}
-                    className={`block w-full text-sm text-gray-700 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 ${index < 2 ? 'cursor-default' : ''}`}
+                    className={`w-full text-sm text-gray-700 border-gray-300 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500 ${
+                      index < 2 ? 'cursor-default' : ''
+                    }`}
                     placeholder="Placeholder text"
                   />
                 </div>
@@ -325,14 +307,14 @@ function FormBuilder() {
                             newOptions[optionIndex] = e.target.value;
                             updateField(index, { options: newOptions });
                           }}
-                          className="block w-full text-sm text-gray-700 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                          className="flex-grow text-sm text-gray-700 border-gray-300 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500"
                         />
                         <button
                           onClick={() => {
                             const newOptions = field.options?.filter((_, i) => i !== optionIndex);
                             updateField(index, { options: newOptions });
                           }}
-                          className="text-gray-400 hover:text-red-500"
+                          className="text-gray-400 hover:text-red-500 transition-colors"
                         >
                           <X className="h-4 w-4" />
                         </button>
@@ -343,7 +325,7 @@ function FormBuilder() {
                         const newOptions = [...(field.options || []), 'New Option'];
                         updateField(index, { options: newOptions });
                       }}
-                      className="text-sm text-indigo-600 hover:text-indigo-500"
+                      className="text-sm text-purple-600 hover:text-purple-500 transition-colors"
                     >
                       Add Option
                     </button>

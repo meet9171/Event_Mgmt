@@ -17,6 +17,9 @@
     - form_responses
       - Attendee form submissions
       - Field values
+    - badge_templates
+      - Badge template definitions
+      - Event association
 
   2. Security
     - RLS policies for all tables
@@ -83,11 +86,28 @@ CREATE TABLE form_responses (
   response_value text
 );
 
+-- Badge Templates table
+CREATE TABLE badge_templates (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now(),
+  event_id uuid REFERENCES events(id) ON DELETE CASCADE,
+  name text NOT NULL,
+  aspectRatio text,
+  orientation text,
+  paperSize text,
+  aspectWidth integer,
+  aspectHeight integer,
+  elements jsonb NOT NULL,
+  is_default boolean DEFAULT false
+);
+
 -- Enable RLS
 ALTER TABLE events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE form_fields ENABLE ROW LEVEL SECURITY;
 ALTER TABLE registrations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE form_responses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE badge_templates ENABLE ROW LEVEL SECURITY;
 
 -- Events policies
 CREATE POLICY "Users can view published events"
@@ -159,6 +179,47 @@ CREATE POLICY "Users can create responses"
   ON form_responses FOR INSERT
   WITH CHECK (true);
 
+-- Badge templates policies
+CREATE POLICY "Users can view own event badge templates"
+  ON badge_templates FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM events
+      WHERE events.id = badge_templates.event_id
+      AND events.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Users can create badge templates for own events"
+  ON badge_templates FOR INSERT
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM events
+      WHERE events.id = badge_templates.event_id
+      AND events.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Users can update own event badge templates"
+  ON badge_templates FOR UPDATE
+  USING (
+    EXISTS (
+      SELECT 1 FROM events
+      WHERE events.id = badge_templates.event_id
+      AND events.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Users can delete own event badge templates"
+  ON badge_templates FOR DELETE
+  USING (
+    EXISTS (
+      SELECT 1 FROM events
+      WHERE events.id = badge_templates.event_id
+      AND events.user_id = auth.uid()
+    )
+  );
+
 -- Functions
 CREATE OR REPLACE FUNCTION update_updated_at()
 RETURNS TRIGGER AS $$
@@ -171,5 +232,10 @@ $$ LANGUAGE plpgsql;
 -- Triggers
 CREATE TRIGGER update_events_updated_at
   BEFORE UPDATE ON events
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at();
+
+CREATE TRIGGER update_badge_templates_updated_at
+  BEFORE UPDATE ON badge_templates
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at();

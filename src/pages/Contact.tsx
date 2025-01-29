@@ -36,7 +36,7 @@ export const ContactPage = () => {
           </div>
         </section>
 
-        <section className="py-24 bg-white">
+        <section className="py-24 px-10 bg-white">
           <div className="container mx-auto px-4">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
               <div className="space-y-12">
