@@ -64,8 +64,6 @@ function PublicEvent() {
     resolver: zodResolver(registrationSchema),
   });
 
- 
-
   useEffect(() => {
     if (!eventId) return;
 
