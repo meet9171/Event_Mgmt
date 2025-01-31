@@ -15,7 +15,6 @@ export interface UserBadgeData {
   [key: string]: string | number;
   NAME: string;
   EMAIL: string;
-  EVENTID: string;
   OTHER?: any;
 }
 

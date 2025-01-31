@@ -83,7 +83,38 @@ export const UserBadge: React.FC<UserBadgeProps> = ({
     height: 0,
     scale: 1
   });
+
+  
   const badgeContainerRef = useRef<HTMLDivElement>(null);
+
+  // Validate userData before processing
+  useEffect(() => {
+    // Comprehensive validation of userData
+    if (!userData) {
+      setError('No user data provided');
+      return;
+    }
+
+    if (!userData.DATA) {
+      setError('Invalid user data structure');
+      return;
+    }
+
+    if (!Array.isArray(userData.DATA.otherField) || userData.DATA.otherField.length === 0) {
+      setError('No additional user fields found');
+      return;
+    }
+
+    // Safe access to registration_id
+    const registrationId = userData.DATA.otherField[0]?.registration_id;
+    if (!registrationId) {
+      setError('No registration ID found in user data');
+      return;
+    }
+
+    // Set event ID safely
+    setEventId(registrationId);
+  }, [userData]);
 
   // Responsive badge container calculation
   useEffect(() => {
@@ -91,16 +122,16 @@ export const UserBadge: React.FC<UserBadgeProps> = ({
       if (badgeContainerRef.current) {
         const containerElement = badgeContainerRef.current;
         const parentContainer = containerElement.parentElement;
-        
+
         if (!parentContainer) return;
 
         const availableWidth = parentContainer.clientWidth;
-        
-        const MIN_WIDTH = 300; 
+
+        const MIN_WIDTH = 300;
         const MAX_WIDTH = Math.min(1200, availableWidth * 0.9); // 90% of parent width or 1200px
 
-        const aspectWidth = badgeTemplate.aspectWidth;
-        const aspectHeight = badgeTemplate.aspectHeight;
+        const aspectWidth = badgeTemplate?.aspectWidth;
+        const aspectHeight = badgeTemplate?.aspectHeight;
 
         const clampedWidth = Math.max(MIN_WIDTH, Math.min(availableWidth, MAX_WIDTH));
 
@@ -112,6 +143,9 @@ export const UserBadge: React.FC<UserBadgeProps> = ({
           height: scaledHeight,
           scale: scaleFactor
         });
+
+        console.log("containerDimensions",containerDimensions);
+
       }
     };
 
@@ -202,6 +236,10 @@ export const UserBadge: React.FC<UserBadgeProps> = ({
 
         console.log("Fetched registrationData:", registrationData);
         const eventId = registrationData.event_id;
+        if (!eventId) {
+          setError('No event ID found for this registration');
+          return;
+        }
         console.log("Fetched Event ID:", eventId);
 
         const { data: badgeTemplates, error: badgeTemplateError } = await supabase
@@ -217,29 +255,44 @@ export const UserBadge: React.FC<UserBadgeProps> = ({
           console.error('Badge template fetch error:', badgeTemplateError);
           return;
         }
+
+        if (!badgeTemplates || !badgeTemplates.elements || badgeTemplates.elements.length === 0) {
+          setError('Invalid or empty badge template');
+          return;
+        }
+
         setBadgeTemplate(badgeTemplates);
         console.log("saved state", badgeTemplate);
 
 
       } catch (error) {
         console.error('Error fetching badge template:', error);
+        setError('An unexpected error occurred while fetching badge template');
+
         // setError('Failed to load badge template');
       }
     };
+    if (eventId) {
+      fetchBadgeTemplate();
+    }
 
-    fetchBadgeTemplate();
-  }, [userData]);
+    // fetchBadgeTemplate();
+  }, [eventId, userData]);
 
   if (error) {
     return (
-      <div className="error-container text-red-500 p-4">
-        {error}
+      <div className="error-container text-red-500 p-4 text-center">
+        <p>Error: {error}</p>
+        <p>Please contact support or try again later.</p>
       </div>
     );
   }
 
   if (!badgeTemplate) {
-    return <div>Loading badge...</div>;
+    <div className="loading-container text-center p-4">
+      <p>Loading badge...</p>
+      <div className="animate-spin">🔄</div>
+    </div>
   }
 
   // Render dynamic badge based on template
@@ -258,7 +311,6 @@ export const UserBadge: React.FC<UserBadgeProps> = ({
         //   overflow: 'hidden'
         // }}
         style={{
-          
           maxWidth: '100%',
           height: 'auto',
           display: 'flex',
@@ -287,58 +339,73 @@ export const UserBadge: React.FC<UserBadgeProps> = ({
           }}
         >
 
-          {badgeTemplate.elements.map((element) => {
+          {badgeTemplate?.elements.map((element) => {
+
+            if (!element || !element.type) {
+              console.warn('Invalid badge element:', element);
+              return null;
+            }
             // Handle different element types
             let displayValue = 'N/A';
 
             const formFieldResponse = userData.DATA.otherField.find(
               response => response.form_fields?.label?.toLowerCase() === element.content.toLowerCase()
             );
+            try {
+              switch (element.type) {
+                case 'text':
+                case 'number':
+                case 'select':
+                  // if (element.content.toLowerCase() === 'username') {
+                  //   displayValue = userData['DATA'].name ||
+                  //     formFieldResponse?.response_value ||
+                  //     element.content;
+                  if (element.content?.toLowerCase() === 'username') {
+                    displayValue = userData?.DATA?.name ||
+                      formFieldResponse?.response_value ||
+                      element.content ||
+                      'N/A';
+                  } else {
+                    displayValue = formFieldResponse
+                      ? formFieldResponse.response_value
+                      : (userData[element.content.toUpperCase()] as string) || element.content;
+                  }
+                  break;
+                case 'email':
+                  displayValue = userData['EMAIL'] as string || element.content;
+                  break;
+                case 'image':
+                  return element.content ? (
+                    <img
+                      key={element.id}
+                      src={element.content}
+                      alt="Badge Background"
+                      // style={{
+                      //   position: 'absolute',
+                      //   left: `${element.x}px`,
+                      //   top: `${element.y}px`,
+                      //   width: `${element.width}px`,
+                      //   height: `${element.height}px`,
+                      //   objectFit: 'cover'
+                      // }}
+                      style={{
+                        position: 'absolute',
+                        left: `${element.x}px`,
+                        top: `${element.y}px`,
+                        // transform: `translate(${element.x}px, ${element.y}px)`,
+                        width: `${element.width}px`,
+                        height: `${element.height}px`,
+                        objectFit: 'cover',
+                        maxWidth: '100%',
+                        maxHeight: '100%'
+                      }}
+                    />
+                  ) : null;
 
-            switch (element.type) {
-              case 'text':
-              case 'number':
-              case 'select':
-                if (element.content.toLowerCase() === 'username') {
-                  displayValue = userData['DATA'].name ||
-                    formFieldResponse?.response_value ||
-                    element.content;
-                } else {
-                  displayValue = formFieldResponse
-                    ? formFieldResponse.response_value
-                    : (userData[element.content.toUpperCase()] as string) || element.content;
-                }
-                break;
-              case 'email':
-                displayValue = userData['EMAIL'] as string || element.content;
-                break;
-              case 'image':
-                return (
-                  <img
-                    key={element.id}
-                    src={element.content}
-                    alt="Badge Background"
-                    // style={{
-                    //   position: 'absolute',
-                    //   left: `${element.x}px`,
-                    //   top: `${element.y}px`,
-                    //   width: `${element.width}px`,
-                    //   height: `${element.height}px`,
-                    //   objectFit: 'cover'
-                    // }}
-                    style={{
-                      position: 'absolute',
-                      left: `${element.x}px`,
-                      top: `${element.y}px`,
-                      // transform: `translate(${element.x}px, ${element.y}px)`,
-                      width: `${element.width}px`,
-                      height: `${element.height}px`,
-                      objectFit: 'cover',
-                      maxWidth: '100%',
-                      maxHeight: '100%'
-                    }}
-                  />
-                );
+              }
+            } catch (err) {
+              console.error('Error processing badge element:', err);
+              displayValue = 'Error';
             }
 
             return (
@@ -363,7 +430,7 @@ export const UserBadge: React.FC<UserBadgeProps> = ({
               </div>
             );
           })}
-          </div>
+        </div>
       </div>
     </div>
   );
