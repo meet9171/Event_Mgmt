@@ -408,9 +408,11 @@ interface QRScannerProps {
 
 export const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [cameraMode, setCameraMode] = useState<'front' | 'back'>('front');
   const [error, setError] = useState<string | null>(null);
+  const [scanMethod, setScanMethod] = useState<'camera' | 'upload'>('camera');
 
   // Detect mobile device
   const isMobileDevice = () => {
@@ -455,6 +457,26 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess }) => {
     }
   };
 
+  const processQRCode = (imageData: ImageData) => {
+    const code = jsQR(imageData.data, imageData.width, imageData.height, {
+      inversionAttempts: 'dontInvert'
+    });
+
+    if (code) {
+      try {
+        const userData: UserBadgeData = JSON.parse(code.data);
+        stopCamera();
+        onScanSuccess(userData);
+        return true;
+      } catch (error) {
+        console.error('Error parsing QR code:', error);
+        setError('Invalid QR code. Please try again.');
+        return false;
+      }
+    }
+    return false;
+  };
+
   const tick = () => {
     if (!videoRef.current || !canvasRef.current) return;
 
@@ -474,31 +496,62 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess }) => {
         
         // Attempt to read QR code
         const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-        const code = jsQR(imageData.data, imageData.width, imageData.height, {
-          inversionAttempts: 'dontInvert'
-        });
+        processQRCode(imageData);
 
-        // Handle QR code result
-        if (code) {
-            console.log("code",code);
+        // const code = jsQR(imageData.data, imageData.width, imageData.height, {
+        //   inversionAttempts: 'dontInvert'
+        // });
+
+        // // Handle QR code result
+        // if (code) {
+        //     console.log("code",code);
             
-          try {
-            console.log("entered");
-            const userData: UserBadgeData = JSON.parse(code.data);
-            console.log("userData",userData);
+        //   try {
+        //     console.log("entered");
+        //     const userData: UserBadgeData = JSON.parse(code.data);
+        //     console.log("userData",userData);
             
-            stopCamera();
-            onScanSuccess(userData);
-          } catch (error) {
-            console.error('Error parsing QR code:', error);
-          }
-        }
+        //     stopCamera();
+        //     onScanSuccess(userData);
+        //   } catch (error) {
+        //     console.error('Error parsing QR code:', error);
+        //   }
+        // }
       }
     }
 
     // Continue scanning
     requestAnimationFrame(tick);
   };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const context = canvas.getContext('2d');
+          
+          if (context) {
+            canvas.width = img.width;
+            canvas.height = img.height;
+            context.drawImage(img, 0, 0, img.width, img.height);
+            const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+            
+            if (!processQRCode(imageData)) {
+              setError('Could not read QR code from the uploaded image.');
+            }
+          }
+        };
+        img.src = e.target?.result as string;
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+
 
   const toggleCameraMode = () => {
     if (isMobileDevice()) {
@@ -507,40 +560,121 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess }) => {
     }
   };
 
+  
+  const toggleScanMethod = () => {
+    setScanMethod(prev => prev === 'camera' ? 'upload' : 'camera');
+    stopCamera();
+    setError(null);
+  };
+
+  // useEffect(() => {
+  //   startCamera();
+  //   return () => stopCamera();
+  // }, [cameraMode]);
+
+  
   useEffect(() => {
-    startCamera();
+    if (scanMethod === 'camera') {
+      startCamera();
+    }
     return () => stopCamera();
-  }, [cameraMode]);
+  }, [cameraMode, scanMethod]);
+
+  // return (
+  //   <div className="qr-scanner-container">
+  //     <video 
+  //       ref={videoRef} 
+  //       style={{ width: '100%', display: 'none' }} 
+  //       playsInline 
+  //       muted 
+  //     />
+  //     <canvas 
+  //       ref={canvasRef} 
+  //       style={{ width: '100%', display: 'block' }} 
+  //     />
+
+  //     {error && (
+  //       <div className="error-message text-red-500 mt-4">
+  //         {error}
+  //       </div>
+  //     )}
+
+  //     {isMobileDevice() && (
+  //       <div className="camera-controls mt-4 text-center">
+  //         <button 
+  //           onClick={toggleCameraMode} 
+  //           className="bg-blue-500 text-white px-4 py-2 rounded"
+  //         >
+  //           Switch Camera
+  //         </button>
+  //       </div>
+  //     )}
+  //   </div>
+  // );
 
   return (
     <div className="qr-scanner-container">
-      <video 
-        ref={videoRef} 
-        style={{ width: '100%', display: 'none' }} 
-        playsInline 
-        muted 
-      />
-      <canvas 
-        ref={canvasRef} 
-        style={{ width: '100%', display: 'block' }} 
-      />
+      <div className="scan-method-toggle mb-4 text-center">
+        <button 
+          onClick={toggleScanMethod} 
+          className="bg-blue-500 text-white px-4 py-2 rounded"
+        >
+          Switch to {scanMethod === 'camera' ? 'Upload' : 'Camera'} Scan
+        </button>
+      </div>
 
-      {error && (
-        <div className="error-message text-red-500 mt-4">
-          {error}
+      {scanMethod === 'camera' ? (
+        <>
+          <video 
+            ref={videoRef} 
+            style={{ width: '100%', display: 'none' }} 
+            playsInline 
+            muted 
+          />
+          <canvas 
+            ref={canvasRef} 
+            style={{ width: '100%', display: 'block' }} 
+          />
+
+          {isMobileDevice() && (
+            <div className="camera-controls mt-4 text-center">
+              <button 
+                onClick={toggleCameraMode} 
+                className="bg-blue-500 text-white px-4 py-2 rounded"
+              >
+                Switch Camera
+              </button>
+            </div>
+          )}
+        </>
+      ) : (
+        <div className="file-upload-container text-center">
+          <input 
+            type="file" 
+            ref={fileInputRef}
+            accept="image/*" 
+            onChange={handleFileUpload} 
+            className="hidden" 
+            id="qr-image-upload"
+          />
+          <label 
+            htmlFor="qr-image-upload" 
+            className="bg-green-500 text-white px-6 py-3 rounded-lg cursor-pointer inline-block"
+          >
+            Upload QR Code Image
+          </label>
+          <p className="mt-2 text-gray-600">
+            Select an image containing a QR code to scan
+          </p>
         </div>
       )}
 
-      {isMobileDevice() && (
-        <div className="camera-controls mt-4 text-center">
-          <button 
-            onClick={toggleCameraMode} 
-            className="bg-blue-500 text-white px-4 py-2 rounded"
-          >
-            Switch Camera
-          </button>
+      {error && (
+        <div className="error-message text-red-500 mt-4 text-center">
+          {error}
         </div>
       )}
     </div>
   );
+
 };

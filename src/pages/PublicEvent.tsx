@@ -272,9 +272,10 @@ function PublicEvent() {
         userData={{
           NAME: registrationData.attendee_name,
           EMAIL: registrationData.attendee_email,
+          EVENTID: eventId || '', 
           OTHER: formres
         }}
-        eventId={eventId}
+        
 
       ></UserBadge>
     </>

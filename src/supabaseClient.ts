@@ -13,11 +13,10 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 // Comprehensive type definitions
 export interface UserBadgeData {
   [key: string]: string | number;
-  NAME?: string;
-  EMAIL?: string;
-  AGE?: number;
-  GENDER?: string;
-  SCHOOL?: string;
+  NAME: string;
+  EMAIL: string;
+  EVENTID: string;
+  OTHER?: any;
 }
 
 export interface BadgeTemplateElement {
