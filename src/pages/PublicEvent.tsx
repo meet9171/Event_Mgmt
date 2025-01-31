@@ -6,6 +6,7 @@ import { Calendar, MapPin, Users, Clock } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { UserBadge } from './UserBadge';
 
 interface Event {
   id: string;
@@ -46,6 +47,8 @@ type RegistrationForm = z.infer<typeof registrationSchema>;
 function PublicEvent() {
   const { eventId } = useParams<{ eventId: string }>();
   const [event, setEvent] = useState<Event | null>(null);
+  const [formres, setFormRes] = useState<any>([]);
+
   const [formFields, setFormFields] = useState<FormField[]>([]);
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
   const [registrationData, setRegistrationData] = useState<{
@@ -74,9 +77,6 @@ function PublicEvent() {
         .eq('id', eventId)
         .maybeSingle();
 
-        console.log("eventid",eventId);
-        console.log("eventdata",eventData);
-        
       if (eventError) {
         console.error('Error fetching event:', eventError);
         return;
@@ -93,10 +93,9 @@ function PublicEvent() {
         return;
       }
 
-      
       setEvent({
         ...eventData,
-        // registration_count: eventData.registrations?.[0]?.count || 0,
+        registration_count: eventData.registrations?.[0]?.count || 0,
       });
       setFormFields(fieldsData || []);
     };
@@ -130,7 +129,7 @@ function PublicEvent() {
             payment_status: event.price === 0 ? 'paid' : 'pending',
           },
         ])
-        .select()
+        .select("*, form_responses(*)")
         .single();
 
       // Set registration data here
@@ -162,26 +161,41 @@ function PublicEvent() {
         .eq('event_id', eventId)
         .single();
 
+      const { data: formResponses, error } = await supabase
+        .from('form_responses')
+        .select('id, registration_id, field_id, response_value, form_fields(label)')
+        .eq('registration_id', registration.id);
+
+      if (error) {
+        console.error('Error fetching form responses:', error);
+      } else {
+        setFormRes(formResponses)
+      }
+
       if (badgeTemplate) {
         const registrationData = {
           name: data.attendee_name,
           email: data.attendee_email,
           ticket_code: registration.ticket_code,
           ...Object.fromEntries(
-            Object.entries(data.form_responses).map(([fieldId, value]) => [
-              formFields.find(f => f.id === fieldId)?.label || fieldId,
-              value
+            // Object.entries(data.form_responses).map(([fieldId, value]) => [
+            //   formFields.find(f => f.id === fieldId)?.label || fieldId,
+            //   value
+            // ])
+            formResponses.map(response => [
+              response.form_fields?.label || response.field_id,
+              response.response_value
             ])
           )
         };
 
-        await sendRegistrationEmail(
-          eventId,
-          registration.id,
-          badgeTemplate.elements,
-          badgeTemplate.aspectRatio,
-          registrationData
-        );
+        // await sendRegistrationEmail(
+        //   eventId,
+        //   registration.id,
+        //   badgeTemplate.elements,
+        //   badgeTemplate.aspectRatio,
+        //   registrationData
+        // );
       }
 
       setRegistrationSuccess(true);
@@ -204,24 +218,33 @@ function PublicEvent() {
         return;
       }
 
-      const res = await fetch('https://eventflow-mail-sender.onrender.com/send-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          to: registrationData.attendee_email,
-          subject: `Successfully Registered into ${event?.name}`,
+      const myHeaders = new Headers();
+      myHeaders.append("Content-Type", "application/json");
+
+      const raw = JSON.stringify({
+        to: registrationData.attendee_email,
+        subject: `Successfully Registered into ${event?.name}`,
+        name: registrationData.attendee_name,
+        message: "Thank you for connecting with EventFlow! We're excited to have you on board. If you have any questions or need assistance, feel free to reach out to us.",
+        data: {
           name: registrationData.attendee_name,
-          message: "Thank you for connecting with EventFlow! We're excited to have you on board. If you have any questions or need assistance, feel free to reach out to us.",
-          data: {
-            email: registrationData.attendee_email,
-            otherField: registrationData.form_responses
+          email: registrationData.attendee_email,
+          otherField: formres
         }
-        }),
       });
-      const jsonRes = await res.json();
-      console.log(jsonRes);
+
+      const requestOptions = {
+        method: "POST",
+        headers: myHeaders,
+        body: raw,
+        redirect: "follow"
+      };
+
+      await fetch("https://eventflow-mail-sender-api.onrender.com/send-email", requestOptions)
+        .then((response) => response.text())
+        .then((result) => console.log(result))
+        .catch((error) => console.error(error));
+
     } catch (error) {
       console.error('Error sending email:', error);
       alert("Invalid Email, Please check and try again");
@@ -232,7 +255,7 @@ function PublicEvent() {
 
     sendemail();
 
-    return (
+    return (<>
       <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
         <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
           <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10 text-center">
@@ -243,9 +266,21 @@ function PublicEvent() {
           </div>
         </div>
       </div>
+
+      <UserBadge
+
+        userData={{
+          NAME: registrationData.attendee_name,
+          EMAIL: registrationData.attendee_email,
+          OTHER: formres
+        }}
+        eventId={eventId}
+
+      ></UserBadge>
+    </>
     );
   }
-  
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
@@ -332,7 +367,7 @@ function PublicEvent() {
                 <div>
                   <label htmlFor="attendee_email" className="block text-sm font-medium text-gray-700">
                     {emailField?.label || 'Email'}
-                  <span className="text-red-500">*</span>
+                    <span className="text-red-500">*</span>
                   </label>
 
                   <input

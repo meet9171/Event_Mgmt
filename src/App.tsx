@@ -1,4 +1,3 @@
-import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import Layout from './components/Layout';
@@ -16,6 +15,7 @@ import EventUpdate from './pages/EventUpdate';
 import { About } from './pages/About';
 import { Privacy } from './pages/Privacy';
 import { ContactPage } from './pages/Contact';
+import CheckIN from './pages/CheckIN';
 
 function App() {
   return (
@@ -29,6 +29,7 @@ function App() {
           <Route path="/about" element={<About />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/contact" element={<ContactPage />} />
+          <Route path="/checkin" element={<CheckIN />} />
 
           <Route element={<ProtectedRoute />}>
             <Route element={<Layout />}>
