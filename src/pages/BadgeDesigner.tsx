@@ -143,61 +143,72 @@ function BadgeDesigner() {
   };
 
   // Responsive badge container state
-  const [containerDimensions, setContainerDimensions] = useState({
-    width: 0,
-    height: 0,
-    scale: 1
-  });
+  // const [containerDimensions, setContainerDimensions] = useState({
+  //   width: 0,
+  //   height: 0,
+  //   scale: 1
+  // });
   const badgeContainerRef = useRef<HTMLDivElement>(null);
 
   // Advanced responsive scaling effect
-  useEffect(() => {
-    const calculateResponsiveDimensions = () => {
-      if (badgeContainerRef.current) {
-        const containerElement = badgeContainerRef.current;
-        // const containerWidth = containerElement.clientWidth;
-
-        const parentContainer = containerElement.parentElement;
+  // useEffect(() => {
+  //   const calculateResponsiveDimensions = () => {
+  //     if (badgeContainerRef.current) {
+  //       const containerElement = badgeContainerRef.current;
+  //       console.log("containerElement",containerElement);
         
-        if (!parentContainer) return;
+  //       // const containerWidth = containerElement.clientWidth;
 
-        const availableWidth = parentContainer.clientWidth;
+  //       const parentContainer = containerElement.parentElement;
         
-        const MIN_WIDTH = 300; 
-        const MAX_WIDTH = Math.min(1200, availableWidth * 0.9); // 90% of parent width or 1200px
+  //       if (!parentContainer) return;
 
-        const clampedWidth = Math.max(MIN_WIDTH, Math.min(availableWidth, MAX_WIDTH));
+  //       const availableWidth = parentContainer.clientWidth;
+  //       console.log("availableWidth",availableWidth);
 
-        const scaleFactor = clampedWidth / aspectWidth;
-        const scaledHeight = (aspectHeight * scaleFactor);
+  //       const MIN_WIDTH = 300; 
+  //       // const MAX_WIDTH = Math.min(1200, availableWidth * 0.9); // 90% of parent width or 1200px
+  //       const MAX_WIDTH = Math.min(1200, availableWidth); // 90% of parent width or 1200px
+  //       console.log("MAX_WIDTH",MAX_WIDTH);
 
-        setContainerDimensions({
-          width: clampedWidth,
-          height: scaledHeight,
-          scale: scaleFactor
-        });
-      }
-    };
+  //       const clampedWidth = Math.max(MIN_WIDTH, availableWidth);
+  //       console.log("clampedWidth",clampedWidth);
 
-    calculateResponsiveDimensions();
+  //       const scaleFactor = clampedWidth / aspectWidth;
+  //       console.log("scaleFactor",scaleFactor);
+  //       console.log("clampedWidth",clampedWidth);
+  //       console.log("aspectWidth",aspectWidth);
 
-    window.addEventListener('resize', calculateResponsiveDimensions);
+  //       const scaledHeight = (aspectHeight * scaleFactor);
+  //       console.log("scaledHeight",scaledHeight);
 
-    return () => window.removeEventListener('resize', calculateResponsiveDimensions);
-  }, [aspectWidth, aspectHeight]);
+  //       setContainerDimensions({
+  //         width: clampedWidth,
+  //         height: aspectHeight,
+  //         scale: scaleFactor
+  //       });
+  //     }
+  //   };
+
+  //   calculateResponsiveDimensions();
+
+  //   window.addEventListener('resize', calculateResponsiveDimensions);
+
+  //   return () => window.removeEventListener('resize', calculateResponsiveDimensions);
+  // }, [aspectWidth, aspectHeight]);
 
   const findPaperSizeOption = (orient: 'Landscape' | 'Portrait', ratio: string) => {
     return paperSizeOptions[orient].find(option => option.value === ratio);
   };
 
-  useEffect(() => {
-    const selectedOption = findPaperSizeOption(orientation, paperSize);
-    if (selectedOption) {
-      setAspectRatio(selectedOption.value);
-      setAspectWidth(selectedOption.width);
-      setAspectHeight(selectedOption.height);
-    }
-  }, [orientation, paperSize]);
+  // useEffect(() => {
+  //   const selectedOption = findPaperSizeOption(orientation, paperSize);
+  //   if (selectedOption) {
+  //     setAspectRatio(selectedOption.value);
+  //     setAspectWidth(selectedOption.width);
+  //     setAspectHeight(selectedOption.height);
+  //   }
+  // }, [orientation, paperSize]);
 
   const URLInputModal = ({
     isOpen,
@@ -333,11 +344,16 @@ function BadgeDesigner() {
     const x = e.clientX - rect.left - dragOffset.x;
     const y = e.clientY - rect.top - dragOffset.y;
 
+    console.log('x:', x, 'y:', y);
+
     const updatedElements = elements.map(el =>
       el.id === selectedElement.id
         ? { ...el, x: Math.max(0, Math.min(x, rect.width - el.width)), y: Math.max(0, Math.min(y, rect.height - el.height)) }
         : el
     );
+
+    console.log("updatedElements", updatedElements);
+    
     setElements(updatedElements);
   };
 
@@ -633,19 +649,22 @@ function BadgeDesigner() {
               <div
                 ref={badgeContainerRef}
                 id="badge-container"
-                className="w-full bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 relative overflow-hidden"
-                style={{
-                  maxWidth: '100%',
-                  height: 'auto',
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center'
-                }}
+                className="w-[235px] h-[378px] bg-red-500 relative overflow-hidden mx-auto"
+                // style={{
+                //   maxWidth: '100%',
+                //   height: 'auto',
+                //   display: 'flex',
+                //   justifyContent: 'center',
+                //   alignItems: 'center'
+                // }}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseUp}
               >
-                <div
+                {/* <div
                   style={{
-                    width: containerDimensions.width,
-                    height: containerDimensions.height,
+                    width: '235px',
+                    height: '151px',
                     position: 'relative',
                     // transform: `scale(${containerDimensions.scale})`,
                     // transformOrigin: 'top left',
@@ -655,7 +674,7 @@ function BadgeDesigner() {
                   onMouseMove={handleMouseMove}
                   onMouseUp={handleMouseUp}
                   onMouseLeave={handleMouseUp}
-                >
+                > */}
                   {elements.map((element) => (
                     <div
                       key={element.id}
@@ -672,8 +691,8 @@ function BadgeDesigner() {
                         fontFamily: element.fontFamily,
                         color: element.color,
                         display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
+                        // alignItems: 'center',
+                        // justifyContent: 'center',
                       }}
                       onMouseDown={(e) => handleMouseDown(e, element)}
                     >
@@ -698,7 +717,7 @@ function BadgeDesigner() {
                       )}
                     </div>
                   ))}
-                </div>
+                {/* </div> */}
               </div>
             </div>
           </div>

@@ -30,7 +30,8 @@
 //     </div>
 //   );
 // };
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { calculateElementPosition, prepareCanvasElements  } from '../utils/badgeUtils';
 
 import {
   supabase, UserBadgeData,
@@ -70,6 +71,10 @@ interface UserBadgeProps {
   userData: UserBadgeData;
 }
 
+interface CanvasElement extends BadgeTemplateElement {
+  imageObj?: HTMLImageElement;
+}
+
 export const UserBadge: React.FC<UserBadgeProps> = ({
   userData
 
@@ -77,6 +82,12 @@ export const UserBadge: React.FC<UserBadgeProps> = ({
   const [badgeTemplate, setBadgeTemplate] = useState<BadgeTemplate | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [eventId, setEventId] = useState<string | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [canvasDimensions, setCanvasDimensions] = useState({
+    width: 0,
+    height: 0,
+    scale: 1
+  });
 
   const [containerDimensions, setContainerDimensions] = useState({
     width: 0,
@@ -84,10 +95,114 @@ export const UserBadge: React.FC<UserBadgeProps> = ({
     scale: 1
   });
 
-  
   const badgeContainerRef = useRef<HTMLDivElement>(null);
 
-  // Validate userData before processing
+  // const renderCanvasBadge = useCallback((elements: CanvasElement[]) => {
+  //   const canvas = canvasRef.current;
+  //   const ctx = canvas?.getContext('2d');
+  
+  //   if (!canvas || !ctx || !badgeTemplate) return;
+  
+  //   // Clear and set background
+  //   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  //   ctx.fillStyle = 'white';
+  //   ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  //   const renderConfig = {
+  //     containerWidth: canvas.width,
+  //     containerHeight: canvas.height,
+  //     templateWidth: badgeTemplate.aspectWidth,
+  //     templateHeight: badgeTemplate.aspectHeight
+  //   };
+  
+  //   elements.forEach(element => {
+  //     ctx.save();
+  
+  //     const { x, y, width, height, fontSize } = calculateElementPosition(
+  //       element, 
+  //       renderConfig
+  //     );
+  
+  //     if (element.type === 'image' && element.imageObj) {
+  //       if (element.imageObj.complete) {
+  //         ctx.drawImage(element.imageObj, x, y, width, height);
+  //       } else {
+  //         element.imageObj.onload = () => {
+  //           ctx.drawImage(element.imageObj!, x, y, width, height);
+  //         };
+  //       }
+  //     } else if (element.type !== 'image') {
+  //       ctx.font = `${fontSize}px ${element.fontFamily || 'Arial'}`;
+  //       ctx.fillStyle = element.color || '#000000';
+  //       ctx.textAlign = 'center';
+  //       ctx.textBaseline = 'middle';
+        
+  //       ctx.fillText(
+  //         element.content, 
+  //         x + width / 2, 
+  //         y + height / 2
+  //       );
+  //     }
+  
+  //     ctx.restore();
+  //   });
+  // }, [badgeTemplate]);
+
+
+  const renderCanvasBadge = useCallback(() => {
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext('2d');
+  
+    if (!canvas || !ctx || !badgeTemplate) return;
+  
+    // Clear and set background
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+    const renderConfig = {
+      containerWidth: canvas.width,
+      containerHeight: canvas.height,
+      templateWidth: badgeTemplate.aspectWidth,
+      templateHeight: badgeTemplate.aspectHeight
+    };
+  
+    // Prepare elements
+    const elements = prepareCanvasElements(badgeTemplate, userData);
+  
+    elements.forEach(element => {
+      ctx.save();
+  
+      const { x, y, width, height, fontSize } = calculateElementPosition(
+        element, 
+        renderConfig
+      );
+  
+      if (element.type === 'image' && element.imageObj) {
+        if (element.imageObj.complete) {
+          ctx.drawImage(element.imageObj, x, y, width, height);
+        } else {
+          element.imageObj.onload = () => {
+            ctx.drawImage(element.imageObj!, x, y, width, height);
+          };
+        }
+      } else if (element.type !== 'image') {
+        ctx.font = `${fontSize}px ${element.fontFamily || 'Arial'}`;
+        ctx.fillStyle = element.color || '#000000';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        
+        ctx.fillText(
+          element.content, 
+          x + width / 2, 
+          y + height / 2
+        );
+      }
+  
+      ctx.restore();
+    });
+  }, [badgeTemplate, userData]);
+
   useEffect(() => {
     // Comprehensive validation of userData
     if (!userData) {
@@ -119,32 +234,57 @@ export const UserBadge: React.FC<UserBadgeProps> = ({
   // Responsive badge container calculation
   useEffect(() => {
     const calculateResponsiveDimensions = () => {
-      if (badgeContainerRef.current) {
+      if (badgeContainerRef.current && badgeTemplate) {
         const containerElement = badgeContainerRef.current;
         const parentContainer = containerElement.parentElement;
 
         if (!parentContainer) return;
 
+
         const availableWidth = parentContainer.clientWidth;
+        const availableHeight = parentContainer.clientHeight;
 
+        // const availableWidth = parentContainer.clientWidth;
+        console.log("availableWidth", availableWidth);
+        if (!badgeTemplate) {
+          <div className="loading-container text-center p-4">
+            <p>Loading badge...</p>
+            <div className="animate-spin">🔄</div>
+          </div>
+        }
         const MIN_WIDTH = 300;
-        const MAX_WIDTH = Math.min(1200, availableWidth * 0.9); // 90% of parent width or 1200px
+        const MAX_WIDTH = Math.min(930, availableWidth); // 90% of parent width or 1200px
 
-        const aspectWidth = badgeTemplate?.aspectWidth;
-        const aspectHeight = badgeTemplate?.aspectHeight;
 
         const clampedWidth = Math.max(MIN_WIDTH, Math.min(availableWidth, MAX_WIDTH));
 
-        const scaleFactor = clampedWidth / aspectWidth;
-        const scaledHeight = (aspectHeight * scaleFactor);
+        const scaleFactor = clampedWidth / badgeTemplate.aspectWidth;
+        const scaledHeight = (badgeTemplate.aspectHeight * scaleFactor);
 
         setContainerDimensions({
           width: clampedWidth,
           height: scaledHeight,
           scale: scaleFactor
         });
+        console.log("availableWidth", availableWidth);
 
-        console.log("containerDimensions",containerDimensions);
+        // // Calculate precise scaling
+        // const scaleX = MAX_WIDTH / badgeTemplate.aspectWidth;
+        // const scaleY = (availableHeight) / badgeTemplate.aspectHeight;
+
+        // // Use minimum scale to maintain aspect ratio
+        // const scale = Math.min(scaleX, scaleY);
+
+        // const clampedWidth = badgeTemplate.aspectWidth;
+        // const clampedHeight = badgeTemplate.aspectHeight;
+
+        // setContainerDimensions({
+        //   width: clampedWidth,
+        //   height: clampedHeight,
+        //   scale: scale
+        // });
+
+        console.log("containerDimensions", containerDimensions);
 
       }
     };
@@ -154,7 +294,7 @@ export const UserBadge: React.FC<UserBadgeProps> = ({
     window.addEventListener('resize', calculateResponsiveDimensions);
 
     return () => window.removeEventListener('resize', calculateResponsiveDimensions);
-  }, [badgeTemplate?.aspectWidth, badgeTemplate?.aspectHeight]);
+  }, [badgeTemplate]);
 
 
   // useEffect(() => {
@@ -205,7 +345,161 @@ export const UserBadge: React.FC<UserBadgeProps> = ({
 
   // console.log("eventID",eventId);
 
+    // Prepare elements with resolved content
+    const prepareCanvasElements = useCallback(() => {
+      if (!badgeTemplate || !userData) return [];
+  
+      return badgeTemplate.elements.map(element => {
+        const preparedElement: CanvasElement = { ...element };
+  
+        // Resolve display value
+        switch (element.type) {
+          case 'text':
+          case 'number':
+          case 'select':
+            const formFieldResponse = userData.DATA.otherField.find(
+              response => response.form_fields?.label?.toLowerCase() === element.content.toLowerCase()
+            );
+  
+            if (element.content?.toLowerCase() === 'username') {
+              preparedElement.content = userData?.DATA?.name ||
+                formFieldResponse?.response_value ||
+                element.content ||
+                'N/A';
+            } else {
+              preparedElement.content = formFieldResponse
+                ? formFieldResponse.response_value
+                : (userData[element.content.toUpperCase()] as string) || element.content;
+            }
+            break;
+  
+          case 'email':
+            preparedElement.content = userData['EMAIL'] as string || element.content;
+            break;
+  
+          case 'image':
+            const img = new Image();
+            img.src = element.content;
+            preparedElement.imageObj = img;
+            break;
+        }
+  
+        return preparedElement;
+      });
+    }, [badgeTemplate, userData]);
+  
+    // Render elements on canvas
+    // const renderCanvasBadge = useCallback((elements: CanvasElement[]) => {
+    //   const canvas = canvasRef.current;
+    //   const ctx = canvas?.getContext('2d');
+  
+    //   if (!canvas || !ctx || !badgeTemplate) return;
+  
+    //   // Clear canvas
+    //   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+    //   // Set background color
+    //   ctx.fillStyle = 'white';
+    //   ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+    //   // Calculate scale
+    //   const scaleX = canvas.width / badgeTemplate.aspectWidth;
+    //   const scaleY = canvas.height / badgeTemplate.aspectHeight;
+    //   const scale = Math.min(scaleX, scaleY);
+    //   console.log("canvas width",canvas.width);
+    //   console.log("canvas height",canvas.height);
+    //   console.log("badgeTemplate.aspectWidth",badgeTemplate.aspectWidth);
+    //   console.log("badgeTemplate.aspectHeight",badgeTemplate.aspectHeight);
+    //   console.log("scale",scale);
+     
+    //   // Render each element
+    //   elements.forEach(element => {
+    //     ctx.save();
+  
+    //     // Position and scale
+    //     const x = element.x * scale;
+    //     const y = element.y * scale;
+    //     const width = element.width * scale;
+    //     const height = element.height * scale;
+  
+    //     if (element.type === 'image' && element.imageObj) {
+    //       // Wait for image to load before drawing
+    //       if (element.imageObj.complete) {
+    //         ctx.drawImage(element.imageObj, x, y, width, height);
+    //       } else {
+    //         element.imageObj.onload = () => {
+    //           ctx.drawImage(element.imageObj!, x, y, width, height);
+    //         };
+    //       }
+    //     } else if (element.type !== 'image') {
+    //       // Text rendering
+    //       ctx.font = `${(element.fontSize || 16) * scale}px ${element.fontFamily || 'Arial'}`;
+    //       ctx.fillStyle = element.color || '#000000';
+    //       ctx.textAlign = 'center';
+    //       ctx.textBaseline = 'middle';
+          
+    //       ctx.fillText(
+    //         element.content, 
+    //         x + width / 2, 
+    //         y + height / 2
+    //       );
+    //     }
+  
+    //     ctx.restore();
+    //   });
+    // }, [badgeTemplate]);
+
   console.log("userdata", userData);
+
+  // Responsive canvas sizing
+  useEffect(() => {
+    const updateCanvasSize = () => {
+      const canvas = canvasRef.current;
+      const container = canvas?.parentElement;
+
+      if (!canvas || !container || !badgeTemplate) return;
+
+      const availableWidth = container.clientWidth;
+      const availableHeight = container.clientHeight;
+
+      const scaleX = availableWidth / badgeTemplate.aspectWidth;
+      const scaleY = availableHeight / badgeTemplate.aspectHeight;
+      const scale = Math.min(scaleX, scaleY);
+
+      const width = badgeTemplate.aspectWidth * scale;
+      const height = badgeTemplate.aspectHeight * scale;
+
+      canvas.width = width;
+      canvas.height = height;
+
+      console.log("availableWidth",availableWidth);
+      console.log("availableHeight",availableHeight);
+      console.log("scaleX",scaleX);
+      console.log("scaleY",scaleY);
+      console.log("scale",scale);
+      console.log("width",width);
+      console.log("height",height);
+      renderCanvasBadge();
+
+
+      // setCanvasDimensions({ width, height, scale });
+
+      // // Render elements after sizing
+      // const elements = prepareCanvasElements();
+      // renderCanvasBadge(elements);
+    };
+
+    // Initial and resize handling
+    // updateCanvasSize();
+    // window.addEventListener('resize', updateCanvasSize);
+    updateCanvasSize();
+    window.addEventListener('resize', updateCanvasSize);
+
+    return () => window.removeEventListener('resize', updateCanvasSize);
+
+    // return () => window.removeEventListener('resize', updateCanvasSize);
+  }, [badgeTemplate, renderCanvasBadge]);
+
 
   useEffect(() => {
     console.log("eventid setted");
@@ -288,20 +582,196 @@ export const UserBadge: React.FC<UserBadgeProps> = ({
     );
   }
 
-  if (!badgeTemplate) {
-    <div className="loading-container text-center p-4">
-      <p>Loading badge...</p>
-      <div className="animate-spin">🔄</div>
-    </div>
-  }
+  // Calculate relative positioning function
+  const calculateRelativePosition = (
+    element: BadgeTemplateElement,
+    containerWidth: number,
+    containerHeight: number,
+    templateWidth: number,
+    templateHeight: number
+  ) => {
+    // Calculate scaling factors
+    const scaleX = containerWidth / templateWidth;
+    const scaleY = containerHeight / templateHeight;
 
+    const scale = Math.min(scaleX, scaleY);
+
+    const offsetX = (containerWidth - (templateWidth * scale)) / 2;
+    const offsetY = (containerHeight - (templateHeight * scale)) / 2;
+
+    // Calculate precise positioning
+    const relativeX = (element.x * scale) + offsetX;
+    const relativeY = (element.y * scale) + offsetY;
+
+    // Calculate scaled dimensions
+    const relativeWidth = element.width * scale;
+    const relativeHeight = element.height * scale;
+
+    const relativeFontSize = (element.fontSize || 16) * scale;
+
+
+    // // Calculate new positions and dimensions
+    // const relativeX = element.x * scaleX;
+    // const relativeY = element.y * scaleY;
+    // const relativeWidth = element.width * scaleX;
+    // const relativeHeight = element.height * scaleY;
+
+    // // Ensure element stays within container bounds
+    // const boundedX = Math.max(0, Math.min(relativeX, containerWidth - relativeWidth));
+    // const boundedY = Math.max(0, Math.min(relativeY, containerHeight - relativeHeight));
+
+    return {
+      x: relativeX,
+      y: relativeY,
+      width: relativeWidth,
+      height: relativeHeight,
+      fontSize: relativeFontSize,
+      scale: scale
+    };
+  };
+
+  // Add print functionality
+  const handlePrintBadge = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const printWindow = window.open('', '', 'width=800,height=1100');
+    if (!printWindow) return;
+    // Create a new window for printing
+    // const printWindow = window.open('', '', 'width=800,height=1100');
+
+    // if (!printWindow || !badgeContainerRef.current) return;
+
+    // // Clone the badge container
+    // const badgeContent = badgeContainerRef.current.cloneNode(true) as HTMLDivElement;
+
+    // Prepare print styles
+    const printStyles = `
+    <style>
+      @media print {
+      //  html, body {
+      //     width: 100%;
+      //     height: 100%;
+      //     margin: 0;
+      //     padding: 0;
+      //     overflow: hidden;
+      //   }
+        body * {
+          visibility: hidden;
+        }
+        // #printable-badge, 
+        // #printable-badge * {
+        //   visibility: visible;
+        // }
+        // #printable-badge-container {
+        //   position: absolute;
+        //   left: 0;
+        //   top: 0;
+        //   width: 100%;
+        //   height: 100%;
+        //   display: flex;
+        //   justify-content: center;
+        //   align-items: center;
+        //   padding: 20mm;
+        //   box-sizing: border-box;
+        // }
+        // #printable-badge {
+        //   width: 100%;
+        //   max-width: 210mm; /* A4 width */
+        //   max-height: 297mm; /* A4 height */
+        //   aspect-ratio: 1 / 1.414; /* Standard aspect ratio */
+        //   object-fit: contain;
+        //   margin: 0 auto;
+        // }
+         #printable-badge { 
+            visibility: visible; 
+            position: absolute; 
+            left: 0; 
+            top: 0; 
+            width: 100%; 
+            height: 100%; 
+          }
+         @page {
+          // size: A4;
+          margin: 0;
+        }
+      }
+    </style>
+  `;
+
+    // // Wrap badge content in a container
+    // const printContainer = printWindow.document.createElement('div');
+    // printContainer.id = 'printable-badge-container';
+
+
+    // // Set ID for print targeting
+    // badgeContent.id = 'printable-badge';
+    // printContainer.appendChild(badgeContent);
+
+    // Construct print content
+    printWindow.document.write('<html><head><title>Print Badge</title>');
+    printWindow.document.write(printStyles);
+    printWindow.document.write('</head><body>');
+    // printWindow.document.body.appendChild(printContainer);
+    printWindow.document.write(`<canvas id="printable-badge" width="${canvas.width}" height="${canvas.height}"></canvas>`);
+
+    printWindow.document.write('</body></html>');
+
+       // Copy canvas content
+       const printCanvas = printWindow.document.getElementById('printable-badge') as HTMLCanvasElement;
+       const printCtx = printCanvas.getContext('2d');
+       
+       if (printCtx) {
+         printCtx.drawImage(canvas, 0, 0);
+       }
+
+    printWindow.document.close();
+
+    // Trigger print
+    printWindow.focus();
+    printWindow.print();
+    printWindow.close();
+  };
   // Render dynamic badge based on template
   return (
-    <div className='p-6'>
+    <div className='p-6 relative'>
+
+      {/* Print Button */}
+      <div className="absolute top-50 right-2 z-10">
+        <button
+          onClick={handlePrintBadge}
+          className="
+          bg-blue-500 
+          hover:bg-blue-600 
+          text-white 
+          font-bold 
+          py-2 
+          px-4 
+          rounded 
+          flex 
+          items-center 
+          space-x-2"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fillRule="evenodd"
+              d="M5 4v3H4a2 2 0 00-2 2v3a2 2 0 002 2h1v2a2 2 0 002 2h6a2 2 0 002-2v-2h1a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a2 2 0 00-2-2H7a2 2 0 00-2 2zm8 0H7v3h6V4zm0 8H7v4h6v-4z"
+              clipRule="evenodd"
+            />
+          </svg>
+          Print Badge
+        </button>
+      </div>
+
       <div
         // className="badge-container relative bg-red-300"
-        className="w-full bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 relative overflow-hidden"
-        ref={badgeContainerRef}
+        className="w-[235px] h-[378px] bg-red-500 rounded-lg border-2 border-dashed border-gray-300 flex justify-center items-center"
+        // ref={badgeContainerRef}
 
         // style={{
         //   width: `${badgeTemplate.aspectWidth}px`,
@@ -311,14 +781,26 @@ export const UserBadge: React.FC<UserBadgeProps> = ({
         //   overflow: 'hidden'
         // }}
         style={{
-          maxWidth: '100%',
-          height: 'auto',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center'
+          width:  `235px`,
+          height:  `378px`,
+          // display: 'flex',
+          // justifyContent: 'center',
+          // alignItems: 'center'
         }}
       >
-        <div
+
+        <canvas
+          ref={canvasRef}
+          style={{
+            width: '235px',
+            height: '378px',
+            backgroundColor: 'white'
+          }}
+        />
+
+
+
+        {/* <div
           // style={{
           //   width: `${badgeTemplate.aspectWidth}px`,
           //   height: `${badgeTemplate.aspectHeight}px`,
@@ -326,20 +808,28 @@ export const UserBadge: React.FC<UserBadgeProps> = ({
           //   backgroundColor: 'white',
           // }}
           style={{
-            //      position: 'absolute',
+            //  position: 'absolute',
             // left: '50%',
             // top: '50%',
             // transform: 'translate(-50%, -50%)',
             width: containerDimensions.width,
             height: containerDimensions.height,
             position: 'relative',
-            // transform: `scale(1)`,
-            transformOrigin: 'top center',
+            // transform: `scale(${containerDimensions.scale})`,
+            // transformOrigin: 'top center',
             backgroundColor: 'white',
           }}
-        >
-
+        > */}
+        {/* 
           {badgeTemplate?.elements.map((element) => {
+            // Calculate relative positioning
+            const { x, y, width, height, fontSize, scale } = calculateRelativePosition(
+              element,
+              containerDimensions.width,
+              containerDimensions.height,
+              badgeTemplate.aspectWidth,
+              badgeTemplate.aspectHeight
+            );
 
             if (!element || !element.type) {
               console.warn('Invalid badge element:', element);
@@ -390,11 +880,11 @@ export const UserBadge: React.FC<UserBadgeProps> = ({
                       // }}
                       style={{
                         position: 'absolute',
-                        left: `${element.x}px`,
-                        top: `${element.y}px`,
+                        left: `${x}px`,
+                        top: `${y}px`,
                         // transform: `translate(${element.x}px, ${element.y}px)`,
-                        width: `${element.width}px`,
-                        height: `${element.height}px`,
+                        width: `${width}px`,
+                        height: `${height}px`,
                         objectFit: 'cover',
                         maxWidth: '100%',
                         maxHeight: '100%'
@@ -413,24 +903,47 @@ export const UserBadge: React.FC<UserBadgeProps> = ({
                 key={element.id}
                 style={{
                   position: 'absolute',
-                  left: `${element.x}px`,
-                  top: `${element.y}px`,
-                  width: `${element.width}px`,
-                  height: `${element.height}px`,
+                  left: `${x}px`,
+                  top: `${y}px`,
+                  width: `${width}px`,
+                  height: `${height}px`,
+                  // color: element.color,
+                  // fontSize: `${fontSize}px`,
+                  // fontFamily: element.fontFamily,
+                  // display: 'flex',
+                  // alignItems: 'center',
+                  // justifyContent: 'center',
+                  // textAlign: 'center',
+                  // overflow: 'hidden', // Prevent content from spilling
+                  // wordBreak: 'break-word' // Ensure long text breaks
                   color: element.color,
-                  fontSize: `${element.fontSize}px`,
+                  fontSize: `${fontSize}px`,
                   fontFamily: element.fontFamily,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  textAlign: 'center'
+                  textAlign: 'center',
+                  overflow: 'hidden',
+                  wordBreak: 'break-word',
+                  border: '1px solid red' // Optional: helps with debugging
                 }}
               >
                 {displayValue}
               </div>
             );
-          })}
-        </div>
+          })} */}
+
+        {/* Error Handling */}
+        {error && (
+          <div className="text-red-500 text-center mt-4">
+            {error}
+          </div>
+        )}
+        {/* </div> */}
+
+
+
+
       </div>
     </div>
   );
